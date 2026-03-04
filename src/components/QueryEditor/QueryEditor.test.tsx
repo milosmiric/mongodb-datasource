@@ -1,4 +1,3 @@
-import React from 'react';
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { QueryEditor } from './QueryEditor';
@@ -92,7 +91,7 @@ describe('QueryEditor', () => {
 
   it('calls onChange with format when format changes', async () => {
     const user = userEvent.setup();
-    const { container } = render(<QueryEditor {...defaultProps} />);
+    render(<QueryEditor {...defaultProps} />);
 
     // Find the Time Series radio button.
     const timeSeriesLabel = screen.getByText('Time Series');

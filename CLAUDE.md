@@ -79,3 +79,11 @@ bun run e2e           # Run E2E tests
 - Go: Table-driven tests with `testify`, mock `MongoClient` interface
 - Frontend: Jest + React Testing Library
 - E2E: Playwright targeting `http://localhost:3105`
+
+### E2E Testing Reference
+
+See [docs/e2e-testing.md](docs/e2e-testing.md) for Grafana 12.4 DOM selectors, test patterns, and gotchas including:
+- Use `data-testid` selectors (e.g., `data-testid RefreshPicker run button`) over text/role matchers
+- Monaco editor default values require explicit blur to commit to query model
+- Template variable names must not collide with MongoDB field references (`$field`)
+- `$__from`/`$__to` are replaced by Grafana frontend with epoch ms before backend processing

@@ -7,21 +7,88 @@
   "graphTooltip": 1,
   "id": null,
   "links": [],
+  "templating": {
+    "list": [
+      {
+        "name": "sensor_type",
+        "type": "custom",
+        "label": "Sensor",
+        "query": "temperature,humidity,pressure,wind_speed",
+        "current": {
+          "selected": true,
+          "text": "temperature",
+          "value": "temperature"
+        },
+        "options": [
+          { "selected": true, "text": "temperature", "value": "temperature" },
+          { "selected": false, "text": "humidity", "value": "humidity" },
+          { "selected": false, "text": "pressure", "value": "pressure" },
+          { "selected": false, "text": "wind_speed", "value": "wind_speed" }
+        ],
+        "includeAll": true,
+        "multi": false
+      },
+      {
+        "name": "loc",
+        "type": "custom",
+        "label": "Location",
+        "query": "building_a,building_b,outdoor",
+        "current": {
+          "selected": true,
+          "text": "All",
+          "value": "$__all"
+        },
+        "options": [
+          { "selected": false, "text": "building_a", "value": "building_a" },
+          { "selected": false, "text": "building_b", "value": "building_b" },
+          { "selected": false, "text": "outdoor", "value": "outdoor" }
+        ],
+        "includeAll": true,
+        "multi": false
+      },
+      {
+        "name": "cat",
+        "type": "custom",
+        "label": "Category",
+        "query": "electronics,clothing,food,books",
+        "current": {
+          "selected": true,
+          "text": "All",
+          "value": "$__all"
+        },
+        "options": [
+          { "selected": false, "text": "electronics", "value": "electronics" },
+          { "selected": false, "text": "clothing", "value": "clothing" },
+          { "selected": false, "text": "food", "value": "food" },
+          { "selected": false, "text": "books", "value": "books" }
+        ],
+        "includeAll": true,
+        "multi": false
+      }
+    ]
+  },
   "panels": [
     {
+      "type": "row",
+      "title": "Time Series — Sensors",
+      "collapsed": false,
+      "gridPos": { "h": 1, "w": 24, "x": 0, "y": 0 }
+    },
+    {
       "title": "Sensor Readings Over Time",
+      "description": "Time series of sensor readings filtered by time range. Uses $__from/$__to (epoch ms via $toDate).",
       "type": "timeseries",
       "datasource": {
         "type": "milosmiric-mongodb-datasource",
         "uid": "mongodb-demo"
       },
-      "gridPos": { "h": 10, "w": 16, "x": 0, "y": 0 },
+      "gridPos": { "h": 10, "w": 16, "x": 0, "y": 1 },
       "targets": [
         {
           "refId": "A",
           "database": "demo",
           "collection": "sensors",
-          "pipeline": "[{\"$match\": {\"sensor\": \"temperature\", \"timestamp\": {\"$gte\": {\"$date\": \"$__from\"}, \"$lte\": {\"$date\": \"$__to\"}}}}, {\"$sort\": {\"timestamp\": 1}}, {\"$project\": {\"_id\": 0, \"timestamp\": 1, \"value\": 1, \"location\": 1}}]",
+          "pipeline": "[{\"$match\": {\"sensor\": \"${sensor_type}\", \"$expr\": {\"$and\": [{\"$gte\": [\"$timestamp\", {\"$toDate\": $__from}]}, {\"$lte\": [\"$timestamp\", {\"$toDate\": $__to}]}]}}}, {\"$sort\": {\"timestamp\": 1}}, {\"$project\": {\"_id\": 0, \"timestamp\": 1, \"value\": 1, \"location\": 1}}]",
           "timeField": "timestamp",
           "format": "time_series",
           "legendFormat": "{{location}}"
@@ -32,31 +99,79 @@
           "custom": {
             "drawStyle": "line",
             "lineInterpolation": "smooth",
-            "fillOpacity": 10
-          },
-          "unit": "celsius"
+            "fillOpacity": 10,
+            "pointSize": 5,
+            "showPoints": "auto"
+          }
         },
         "overrides": []
       },
       "options": {
         "tooltip": { "mode": "multi" },
-        "legend": { "displayMode": "table", "placement": "bottom" }
+        "legend": { "displayMode": "table", "placement": "bottom", "calcs": ["mean", "max", "min"] }
       }
     },
     {
-      "title": "Total Sensor Readings",
-      "type": "stat",
+      "title": "Sensor Gauge",
+      "description": "Latest reading for selected sensor",
+      "type": "gauge",
       "datasource": {
         "type": "milosmiric-mongodb-datasource",
         "uid": "mongodb-demo"
       },
-      "gridPos": { "h": 5, "w": 8, "x": 16, "y": 0 },
+      "gridPos": { "h": 5, "w": 4, "x": 16, "y": 1 },
       "targets": [
         {
           "refId": "A",
           "database": "demo",
           "collection": "sensors",
-          "pipeline": "[{\"$count\": \"total\"}]",
+          "pipeline": "[{\"$match\": {\"sensor\": \"${sensor_type}\"}}, {\"$sort\": {\"timestamp\": -1}}, {\"$limit\": 1}, {\"$project\": {\"_id\": 0, \"value\": 1}}]",
+          "timeField": "",
+          "format": "table",
+          "legendFormat": ""
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              { "color": "blue", "value": null },
+              { "color": "green", "value": 15 },
+              { "color": "yellow", "value": 25 },
+              { "color": "red", "value": 30 }
+            ]
+          },
+          "min": 0,
+          "max": 40
+        },
+        "overrides": []
+      },
+      "options": {
+        "reduceOptions": {
+          "calcs": ["lastNotNull"],
+          "fields": "/^value$/",
+          "values": false
+        },
+        "showThresholdLabels": false,
+        "showThresholdMarkers": true
+      }
+    },
+    {
+      "title": "Reading Count",
+      "description": "Total sensor readings in the current time range",
+      "type": "stat",
+      "datasource": {
+        "type": "milosmiric-mongodb-datasource",
+        "uid": "mongodb-demo"
+      },
+      "gridPos": { "h": 5, "w": 4, "x": 20, "y": 1 },
+      "targets": [
+        {
+          "refId": "A",
+          "database": "demo",
+          "collection": "sensors",
+          "pipeline": "[{\"$match\": {\"$expr\": {\"$and\": [{\"$gte\": [\"$timestamp\", {\"$toDate\": $__from}]}, {\"$lte\": [\"$timestamp\", {\"$toDate\": $__to}]}]}}}, {\"$count\": \"total\"}]",
           "timeField": "",
           "format": "table",
           "legendFormat": ""
@@ -87,19 +202,231 @@
       }
     },
     {
-      "title": "Recent Events",
-      "type": "table",
+      "title": "Total Sensor Readings",
+      "description": "All-time count of sensor readings",
+      "type": "stat",
       "datasource": {
         "type": "milosmiric-mongodb-datasource",
         "uid": "mongodb-demo"
       },
-      "gridPos": { "h": 5, "w": 8, "x": 16, "y": 5 },
+      "gridPos": { "h": 5, "w": 4, "x": 16, "y": 6 },
+      "targets": [
+        {
+          "refId": "A",
+          "database": "demo",
+          "collection": "sensors",
+          "pipeline": "[{\"$count\": \"total\"}]",
+          "timeField": "",
+          "format": "table",
+          "legendFormat": ""
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              { "color": "green", "value": null }
+            ]
+          }
+        },
+        "overrides": []
+      },
+      "options": {
+        "reduceOptions": {
+          "calcs": ["lastNotNull"],
+          "fields": "/^total$/",
+          "values": false
+        },
+        "colorMode": "value",
+        "graphMode": "none",
+        "textMode": "auto"
+      }
+    },
+    {
+      "title": "Unique Locations",
+      "type": "stat",
+      "datasource": {
+        "type": "milosmiric-mongodb-datasource",
+        "uid": "mongodb-demo"
+      },
+      "gridPos": { "h": 5, "w": 4, "x": 20, "y": 6 },
+      "targets": [
+        {
+          "refId": "A",
+          "database": "demo",
+          "collection": "sensors",
+          "pipeline": "[{\"$group\": {\"_id\": \"$location\"}}, {\"$count\": \"total\"}]",
+          "timeField": "",
+          "format": "table",
+          "legendFormat": ""
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              { "color": "purple", "value": null }
+            ]
+          }
+        },
+        "overrides": []
+      },
+      "options": {
+        "reduceOptions": {
+          "calcs": ["lastNotNull"],
+          "fields": "/^total$/",
+          "values": false
+        },
+        "colorMode": "value",
+        "graphMode": "none",
+        "textMode": "auto"
+      }
+    },
+    {
+      "type": "row",
+      "title": "Aggregations",
+      "collapsed": false,
+      "gridPos": { "h": 1, "w": 24, "x": 0, "y": 11 }
+    },
+    {
+      "title": "Avg Value by Sensor Type",
+      "description": "$group by sensor, $avg of value",
+      "type": "barchart",
+      "datasource": {
+        "type": "milosmiric-mongodb-datasource",
+        "uid": "mongodb-demo"
+      },
+      "gridPos": { "h": 9, "w": 8, "x": 0, "y": 12 },
+      "targets": [
+        {
+          "refId": "A",
+          "database": "demo",
+          "collection": "sensors",
+          "pipeline": "[{\"$match\": {\"$expr\": {\"$and\": [{\"$gte\": [\"$timestamp\", {\"$toDate\": $__from}]}, {\"$lte\": [\"$timestamp\", {\"$toDate\": $__to}]}]}}}, {\"$group\": {\"_id\": \"$sensor\", \"avg_value\": {\"$avg\": \"$value\"}}}, {\"$project\": {\"_id\": 0, \"sensor\": \"$_id\", \"avg_value\": {\"$round\": [\"$avg_value\", 2]}}}, {\"$sort\": {\"sensor\": 1}}]",
+          "timeField": "",
+          "format": "table",
+          "legendFormat": ""
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "color": { "mode": "palette-classic" }
+        },
+        "overrides": []
+      },
+      "options": {
+        "xField": "sensor",
+        "orientation": "horizontal",
+        "showValue": "always",
+        "barWidth": 0.8
+      }
+    },
+    {
+      "title": "Readings by Location",
+      "description": "$group + $count by location",
+      "type": "piechart",
+      "datasource": {
+        "type": "milosmiric-mongodb-datasource",
+        "uid": "mongodb-demo"
+      },
+      "gridPos": { "h": 9, "w": 8, "x": 8, "y": 12 },
+      "targets": [
+        {
+          "refId": "A",
+          "database": "demo",
+          "collection": "sensors",
+          "pipeline": "[{\"$match\": {\"$expr\": {\"$and\": [{\"$gte\": [\"$timestamp\", {\"$toDate\": $__from}]}, {\"$lte\": [\"$timestamp\", {\"$toDate\": $__to}]}]}}}, {\"$group\": {\"_id\": \"$location\", \"count\": {\"$sum\": 1}}}, {\"$project\": {\"_id\": 0, \"location\": \"$_id\", \"count\": 1}}, {\"$sort\": {\"location\": 1}}]",
+          "timeField": "",
+          "format": "table",
+          "legendFormat": ""
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "color": { "mode": "palette-classic" }
+        },
+        "overrides": []
+      },
+      "options": {
+        "reduceOptions": {
+          "calcs": ["lastNotNull"],
+          "fields": "/^count$/",
+          "values": true
+        },
+        "pieType": "donut",
+        "legend": { "displayMode": "table", "placement": "right", "values": ["value", "percent"] },
+        "tooltip": { "mode": "single" }
+      }
+    },
+    {
+      "title": "Event Type Distribution",
+      "description": "$group by event type with count",
+      "type": "bargauge",
+      "datasource": {
+        "type": "milosmiric-mongodb-datasource",
+        "uid": "mongodb-demo"
+      },
+      "gridPos": { "h": 9, "w": 8, "x": 16, "y": 12 },
       "targets": [
         {
           "refId": "A",
           "database": "demo",
           "collection": "events",
-          "pipeline": "[{\"$sort\": {\"timestamp\": -1}}, {\"$limit\": 20}, {\"$project\": {\"_id\": 0, \"timestamp\": 1, \"type\": 1, \"userId\": 1, \"ip\": 1}}]",
+          "pipeline": "[{\"$group\": {\"_id\": \"$type\", \"count\": {\"$sum\": 1}}}, {\"$project\": {\"_id\": 0, \"event_type\": \"$_id\", \"count\": 1}}, {\"$sort\": {\"count\": -1}}]",
+          "timeField": "",
+          "format": "table",
+          "legendFormat": ""
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "color": { "mode": "palette-classic" },
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              { "color": "green", "value": null },
+              { "color": "yellow", "value": 30 },
+              { "color": "red", "value": 50 }
+            ]
+          }
+        },
+        "overrides": []
+      },
+      "options": {
+        "reduceOptions": {
+          "calcs": ["lastNotNull"],
+          "fields": "/^count$/",
+          "values": true
+        },
+        "orientation": "horizontal",
+        "displayMode": "gradient",
+        "showUnfilled": true,
+        "namePlacement": "auto"
+      }
+    },
+    {
+      "type": "row",
+      "title": "Tables",
+      "collapsed": false,
+      "gridPos": { "h": 1, "w": 24, "x": 0, "y": 21 }
+    },
+    {
+      "title": "Recent Events",
+      "description": "Last 50 events with nested metadata fields",
+      "type": "table",
+      "datasource": {
+        "type": "milosmiric-mongodb-datasource",
+        "uid": "mongodb-demo"
+      },
+      "gridPos": { "h": 8, "w": 12, "x": 0, "y": 22 },
+      "targets": [
+        {
+          "refId": "A",
+          "database": "demo",
+          "collection": "events",
+          "pipeline": "[{\"$sort\": {\"timestamp\": -1}}, {\"$limit\": 50}, {\"$project\": {\"_id\": 0, \"timestamp\": 1, \"type\": 1, \"userId\": 1, \"ip\": 1, \"duration_ms\": \"$metadata.duration_ms\", \"success\": \"$metadata.success\"}}]",
           "timeField": "",
           "format": "table",
           "legendFormat": ""
@@ -115,19 +442,297 @@
       }
     },
     {
-      "title": "Users Table",
+      "title": "Users",
+      "description": "All users with role and status",
       "type": "table",
       "datasource": {
         "type": "milosmiric-mongodb-datasource",
         "uid": "mongodb-demo"
       },
-      "gridPos": { "h": 8, "w": 24, "x": 0, "y": 10 },
+      "gridPos": { "h": 8, "w": 12, "x": 12, "y": 22 },
       "targets": [
         {
           "refId": "A",
           "database": "demo",
           "collection": "users",
           "pipeline": "[{\"$project\": {\"_id\": 0, \"name\": 1, \"email\": 1, \"role\": 1, \"active\": 1, \"loginCount\": 1, \"lastLogin\": 1, \"tags\": 1}}]",
+          "timeField": "",
+          "format": "table",
+          "legendFormat": ""
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {},
+        "overrides": [
+          {
+            "matcher": { "id": "byName", "options": "active" },
+            "properties": [
+              {
+                "id": "custom.cellOptions",
+                "value": {
+                  "type": "color-text"
+                }
+              },
+              {
+                "id": "mappings",
+                "value": [
+                  { "type": "value", "options": { "true": { "text": "Active", "color": "green" }, "false": { "text": "Inactive", "color": "red" } } }
+                ]
+              }
+            ]
+          }
+        ]
+      },
+      "options": {
+        "showHeader": true
+      }
+    },
+    {
+      "type": "row",
+      "title": "Orders Analytics",
+      "collapsed": false,
+      "gridPos": { "h": 1, "w": 24, "x": 0, "y": 30 }
+    },
+    {
+      "title": "Revenue Over Time",
+      "description": "Hourly revenue from orders using $dateTrunc",
+      "type": "timeseries",
+      "datasource": {
+        "type": "milosmiric-mongodb-datasource",
+        "uid": "mongodb-demo"
+      },
+      "gridPos": { "h": 9, "w": 12, "x": 0, "y": 31 },
+      "targets": [
+        {
+          "refId": "A",
+          "database": "demo",
+          "collection": "orders",
+          "pipeline": "[{\"$match\": {\"status\": \"completed\", \"$expr\": {\"$and\": [{\"$gte\": [\"$timestamp\", {\"$toDate\": $__from}]}, {\"$lte\": [\"$timestamp\", {\"$toDate\": $__to}]}]}}}, {\"$group\": {\"_id\": {\"$dateTrunc\": {\"date\": \"$timestamp\", \"unit\": \"hour\"}}, \"revenue\": {\"$sum\": \"$amount\"}, \"orders\": {\"$sum\": 1}}}, {\"$project\": {\"_id\": 0, \"timestamp\": \"$_id\", \"revenue\": {\"$round\": [\"$revenue\", 2]}, \"orders\": 1}}, {\"$sort\": {\"timestamp\": 1}}]",
+          "timeField": "timestamp",
+          "format": "time_series",
+          "legendFormat": ""
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "custom": {
+            "drawStyle": "bars",
+            "fillOpacity": 80,
+            "gradientMode": "scheme"
+          },
+          "unit": "currencyUSD"
+        },
+        "overrides": []
+      },
+      "options": {
+        "tooltip": { "mode": "multi" },
+        "legend": { "displayMode": "list", "placement": "bottom" }
+      }
+    },
+    {
+      "title": "Sales by Category",
+      "description": "$group by category, $sum amount",
+      "type": "piechart",
+      "datasource": {
+        "type": "milosmiric-mongodb-datasource",
+        "uid": "mongodb-demo"
+      },
+      "gridPos": { "h": 9, "w": 6, "x": 12, "y": 31 },
+      "targets": [
+        {
+          "refId": "A",
+          "database": "demo",
+          "collection": "orders",
+          "pipeline": "[{\"$match\": {\"status\": \"completed\"}}, {\"$group\": {\"_id\": \"$category\", \"total\": {\"$sum\": \"$amount\"}}}, {\"$project\": {\"_id\": 0, \"category\": \"$_id\", \"total\": {\"$round\": [\"$total\", 2]}}}, {\"$sort\": {\"total\": -1}}]",
+          "timeField": "",
+          "format": "table",
+          "legendFormat": ""
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "color": { "mode": "palette-classic" }
+        },
+        "overrides": []
+      },
+      "options": {
+        "reduceOptions": {
+          "calcs": ["lastNotNull"],
+          "fields": "/^total$/",
+          "values": true
+        },
+        "pieType": "pie",
+        "legend": { "displayMode": "table", "placement": "bottom", "values": ["value", "percent"] }
+      }
+    },
+    {
+      "title": "Top Products",
+      "description": "$group by product, $sum quantity, sorted descending",
+      "type": "table",
+      "datasource": {
+        "type": "milosmiric-mongodb-datasource",
+        "uid": "mongodb-demo"
+      },
+      "gridPos": { "h": 9, "w": 6, "x": 18, "y": 31 },
+      "targets": [
+        {
+          "refId": "A",
+          "database": "demo",
+          "collection": "orders",
+          "pipeline": "[{\"$match\": {\"status\": \"completed\"}}, {\"$group\": {\"_id\": \"$product\", \"total_qty\": {\"$sum\": \"$quantity\"}, \"total_revenue\": {\"$sum\": \"$amount\"}}}, {\"$project\": {\"_id\": 0, \"product\": \"$_id\", \"total_qty\": 1, \"total_revenue\": {\"$round\": [\"$total_revenue\", 2]}}}, {\"$sort\": {\"total_qty\": -1}}]",
+          "timeField": "",
+          "format": "table",
+          "legendFormat": ""
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {},
+        "overrides": []
+      },
+      "options": {
+        "showHeader": true,
+        "sortBy": [{ "displayName": "total_qty", "desc": true }]
+      }
+    },
+    {
+      "type": "row",
+      "title": "Orders by Region",
+      "collapsed": false,
+      "gridPos": { "h": 1, "w": 24, "x": 0, "y": 40 }
+    },
+    {
+      "title": "Orders by Region",
+      "description": "Bar chart: count of orders by region",
+      "type": "barchart",
+      "datasource": {
+        "type": "milosmiric-mongodb-datasource",
+        "uid": "mongodb-demo"
+      },
+      "gridPos": { "h": 8, "w": 12, "x": 0, "y": 41 },
+      "targets": [
+        {
+          "refId": "A",
+          "database": "demo",
+          "collection": "orders",
+          "pipeline": "[{\"$group\": {\"_id\": \"$region\", \"count\": {\"$sum\": 1}, \"revenue\": {\"$sum\": \"$amount\"}}}, {\"$project\": {\"_id\": 0, \"region\": \"$_id\", \"count\": 1, \"revenue\": {\"$round\": [\"$revenue\", 2]}}}, {\"$sort\": {\"region\": 1}}]",
+          "timeField": "",
+          "format": "table",
+          "legendFormat": ""
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "color": { "mode": "palette-classic" }
+        },
+        "overrides": []
+      },
+      "options": {
+        "xField": "region",
+        "orientation": "vertical",
+        "showValue": "always",
+        "barWidth": 0.7
+      }
+    },
+    {
+      "title": "Order Status Breakdown",
+      "description": "Pie chart of order statuses",
+      "type": "piechart",
+      "datasource": {
+        "type": "milosmiric-mongodb-datasource",
+        "uid": "mongodb-demo"
+      },
+      "gridPos": { "h": 8, "w": 6, "x": 12, "y": 41 },
+      "targets": [
+        {
+          "refId": "A",
+          "database": "demo",
+          "collection": "orders",
+          "pipeline": "[{\"$group\": {\"_id\": \"$status\", \"count\": {\"$sum\": 1}}}, {\"$project\": {\"_id\": 0, \"status\": \"$_id\", \"count\": 1}}, {\"$sort\": {\"status\": 1}}]",
+          "timeField": "",
+          "format": "table",
+          "legendFormat": ""
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "color": { "mode": "palette-classic" }
+        },
+        "overrides": []
+      },
+      "options": {
+        "reduceOptions": {
+          "calcs": ["lastNotNull"],
+          "fields": "/^count$/",
+          "values": true
+        },
+        "pieType": "donut",
+        "legend": { "displayMode": "table", "placement": "right", "values": ["value", "percent"] }
+      }
+    },
+    {
+      "title": "Avg Order Value by Category",
+      "description": "Gauge showing average order value per category",
+      "type": "bargauge",
+      "datasource": {
+        "type": "milosmiric-mongodb-datasource",
+        "uid": "mongodb-demo"
+      },
+      "gridPos": { "h": 8, "w": 6, "x": 18, "y": 41 },
+      "targets": [
+        {
+          "refId": "A",
+          "database": "demo",
+          "collection": "orders",
+          "pipeline": "[{\"$match\": {\"status\": \"completed\"}}, {\"$group\": {\"_id\": \"$category\", \"avg_value\": {\"$avg\": \"$amount\"}}}, {\"$project\": {\"_id\": 0, \"category\": \"$_id\", \"avg_value\": {\"$round\": [\"$avg_value\", 2]}}}, {\"$sort\": {\"avg_value\": -1}}]",
+          "timeField": "",
+          "format": "table",
+          "legendFormat": ""
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "currencyUSD",
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              { "color": "green", "value": null }
+            ]
+          }
+        },
+        "overrides": []
+      },
+      "options": {
+        "reduceOptions": {
+          "calcs": ["lastNotNull"],
+          "fields": "/^avg_value$/",
+          "values": true
+        },
+        "orientation": "horizontal",
+        "displayMode": "gradient",
+        "showUnfilled": true
+      }
+    },
+    {
+      "type": "row",
+      "title": "Advanced — BSON Types",
+      "collapsed": false,
+      "gridPos": { "h": 1, "w": 24, "x": 0, "y": 49 }
+    },
+    {
+      "title": "Types Showcase",
+      "description": "Raw table from types_showcase collection — verifies all BSON types render correctly",
+      "type": "table",
+      "datasource": {
+        "type": "milosmiric-mongodb-datasource",
+        "uid": "mongodb-demo"
+      },
+      "gridPos": { "h": 8, "w": 24, "x": 0, "y": 50 },
+      "targets": [
+        {
+          "refId": "A",
+          "database": "demo",
+          "collection": "types_showcase",
+          "pipeline": "[{\"$project\": {\"_id\": 0}}]",
           "timeField": "",
           "format": "table",
           "legendFormat": ""
@@ -143,10 +748,7 @@
     }
   ],
   "schemaVersion": 39,
-  "tags": ["mongodb", "demo"],
-  "templating": {
-    "list": []
-  },
+  "tags": ["mongodb", "demo", "showcase"],
   "time": {
     "from": "now-24h",
     "to": "now"

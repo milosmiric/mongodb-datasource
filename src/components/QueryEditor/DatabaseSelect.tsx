@@ -37,6 +37,7 @@ export function DatabaseSelect({ datasource, value, onChange }: DatabaseSelectPr
     <>
       <InlineField label="Database" labelWidth={14} tooltip="Select the MongoDB database to query">
         <Select
+          inputId="mongodb-database-select"
           options={options}
           value={selected}
           onChange={(v) => onChange(v.value ?? '')}

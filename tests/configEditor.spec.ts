@@ -8,10 +8,11 @@ test.describe('Config Editor', () => {
     await page.goto('/connections/datasources/edit/mongodb-demo');
     await page.waitForSelector('text=MongoDB');
 
-    // Verify key config fields are visible.
-    await expect(page.getByText('Connection')).toBeVisible();
-    await expect(page.getByText('Authentication')).toBeVisible();
-    await expect(page.getByText('TLS / SSL')).toBeVisible();
+    // Verify key config sections are visible using <legend> elements
+    // to avoid matching nav items like "Connections".
+    await expect(page.locator('legend', { hasText: 'Connection' })).toBeVisible();
+    await expect(page.locator('legend', { hasText: 'Authentication' })).toBeVisible();
+    await expect(page.locator('legend', { hasText: 'TLS / SSL' })).toBeVisible();
   });
 
   test('connection URI is configured (masked)', async ({ page }) => {
@@ -26,7 +27,7 @@ test.describe('Config Editor', () => {
     await page.goto('/connections/datasources/edit/mongodb-demo');
     await page.waitForSelector('text=MongoDB');
 
-    const dbInput = page.getByPlaceholderText('mydb');
+    const dbInput = page.getByPlaceholder('mydb');
     await expect(dbInput).toHaveValue('demo');
   });
 });

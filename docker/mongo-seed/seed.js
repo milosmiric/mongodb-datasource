@@ -134,4 +134,49 @@ db.types_showcase.insertMany([
 ]);
 print('  Inserted 2 types_showcase documents');
 
+// --- Orders (rich data for aggregation demos) ---
+db.orders.drop();
+
+const products = [
+  { name: 'Laptop', category: 'electronics', basePrice: 999 },
+  { name: 'Headphones', category: 'electronics', basePrice: 79 },
+  { name: 'Keyboard', category: 'electronics', basePrice: 49 },
+  { name: 'T-Shirt', category: 'clothing', basePrice: 25 },
+  { name: 'Jeans', category: 'clothing', basePrice: 60 },
+  { name: 'Jacket', category: 'clothing', basePrice: 120 },
+  { name: 'Coffee Beans', category: 'food', basePrice: 15 },
+  { name: 'Olive Oil', category: 'food', basePrice: 12 },
+  { name: 'Chocolate', category: 'food', basePrice: 8 },
+  { name: 'Novel', category: 'books', basePrice: 14 },
+  { name: 'Cookbook', category: 'books', basePrice: 22 },
+  { name: 'Textbook', category: 'books', basePrice: 65 },
+];
+const regions = ['north', 'south', 'east', 'west'];
+const statuses = ['completed', 'completed', 'completed', 'pending', 'cancelled']; // weighted toward completed
+const customers = ['Alice', 'Bob', 'Carol', 'Dave', 'Eve', 'Frank', 'Grace', 'Hank', 'Ivy', 'Jack'];
+const orders = [];
+
+for (let i = 0; i < 500; i++) {
+  const timestamp = new Date(now.getTime() - (500 - i) * 120 * 1000); // 1 order per 2 minutes
+  const product = products[i % products.length];
+  const quantity = Math.floor(Math.random() * 5) + 1;
+  const amount = Math.round(product.basePrice * quantity * (0.9 + Math.random() * 0.2) * 100) / 100;
+
+  orders.push({
+    timestamp: timestamp,
+    product: product.name,
+    category: product.category,
+    amount: amount,
+    quantity: quantity,
+    region: regions[i % regions.length],
+    status: statuses[Math.floor(Math.random() * statuses.length)],
+    customer: customers[i % customers.length],
+  });
+}
+
+db.orders.insertMany(orders);
+db.orders.createIndex({ timestamp: 1 });
+db.orders.createIndex({ category: 1 });
+print(`  Inserted ${orders.length} orders`);
+
 print('Seed complete!');

@@ -38,6 +38,7 @@ export function CollectionSelect({ datasource, database, value, onChange }: Coll
     <>
       <InlineField label="Collection" labelWidth={14} tooltip="Select the MongoDB collection to query">
         <Select
+          inputId="mongodb-collection-select"
           options={options}
           value={selected}
           onChange={(v) => onChange(v.value ?? '')}

@@ -24,14 +24,16 @@ export function PipelineEditor({ value, onChange }: PipelineEditorProps) {
       tooltip="MongoDB aggregation pipeline as a JSON array. Use $__from, $__to for time range variables."
       grow
     >
-      <CodeEditor
-        value={value}
-        language="json"
-        showLineNumbers
-        showMiniMap={false}
-        height="200px"
-        onBlur={onChange}
-      />
+      <div data-testid="mongodb-pipeline-editor">
+        <CodeEditor
+          value={value}
+          language="json"
+          showLineNumbers
+          showMiniMap={false}
+          height="200px"
+          onBlur={onChange}
+        />
+      </div>
     </InlineField>
   );
 }
