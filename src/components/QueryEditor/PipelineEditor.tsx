@@ -21,7 +21,7 @@ export function PipelineEditor({ value, onChange }: PipelineEditorProps) {
     <InlineField
       label="Pipeline"
       labelWidth={14}
-      tooltip="MongoDB aggregation pipeline as a JSON array. Use $__from, $__to for time range variables."
+      tooltip="MongoDB aggregation pipeline as a JSON array. $__from and $__to are replaced with epoch milliseconds — wrap them with {$toDate: $__from} to convert to DateTime for $match comparisons."
       grow
     >
       <div data-testid="mongodb-pipeline-editor">
