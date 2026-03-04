@@ -750,7 +750,7 @@
   "schemaVersion": 39,
   "tags": ["mongodb", "demo", "showcase"],
   "time": {
-    "from": "now-24h",
+    "from": "now-7d",
     "to": "now"
   },
   "timepicker": {},

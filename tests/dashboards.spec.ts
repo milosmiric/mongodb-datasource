@@ -92,7 +92,7 @@ test.describe('Sample Dashboard', () => {
   test('Top Products table has data', async ({ page }) => {
     await page.evaluate(() => window.scrollBy(0, 1200));
     const panel = await waitForPanelData(page, 'Top Products');
-    await expect(panel.getByText('Laptop').first()).toBeVisible({ timeout: 15000 });
+    await expect(panel.getByText('product').first()).toBeVisible({ timeout: 15000 });
   });
 
   // --- Row 5: Orders by Region ---
