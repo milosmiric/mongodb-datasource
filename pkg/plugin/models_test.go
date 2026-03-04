@@ -146,6 +146,36 @@ func TestParseDatasourceSettings(t *testing.T) {
 				AuthMechanism: "SCRAM-SHA-256",
 			},
 		},
+		{
+			name:       "client cert extracted from secure data",
+			jsonData:   `{"uri":"mongodb://localhost:27105","database":"demo"}`,
+			secureData: map[string]string{"tlsClientCert": "-----BEGIN CERTIFICATE-----\ncert\n-----END CERTIFICATE-----"},
+			wantSettings: DatasourceSettings{
+				URI:           "mongodb://localhost:27105",
+				Database:      "demo",
+				TLSClientCert: "-----BEGIN CERTIFICATE-----\ncert\n-----END CERTIFICATE-----",
+			},
+		},
+		{
+			name:       "client key extracted from secure data",
+			jsonData:   `{"uri":"mongodb://localhost:27105","database":"demo"}`,
+			secureData: map[string]string{"tlsClientKey": "-----BEGIN EC PRIVATE KEY-----\nkey\n-----END EC PRIVATE KEY-----"},
+			wantSettings: DatasourceSettings{
+				URI:          "mongodb://localhost:27105",
+				Database:     "demo",
+				TLSClientKey: "-----BEGIN EC PRIVATE KEY-----\nkey\n-----END EC PRIVATE KEY-----",
+			},
+		},
+		{
+			name:     "username from JSON data",
+			jsonData: `{"uri":"mongodb://localhost:27105","database":"demo","username":"myuser","authMechanism":"SCRAM-SHA-256"}`,
+			wantSettings: DatasourceSettings{
+				URI:           "mongodb://localhost:27105",
+				Database:      "demo",
+				Username:      "myuser",
+				AuthMechanism: "SCRAM-SHA-256",
+			},
+		},
 	}
 
 	for _, tt := range tests {

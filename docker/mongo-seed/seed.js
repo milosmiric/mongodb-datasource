@@ -275,4 +275,48 @@ db.orders.createIndex({ category: 1 });
 db.orders.createIndex({ customer: 1 });
 print(`  Inserted ${orders.length} orders (${ORDER_DAYS} days)`);
 
+// ---------------------------------------------------------------------------
+// Auth users — for E2E testing of auth mechanisms
+// ---------------------------------------------------------------------------
+const adminDb = db.getSiblingDB('admin');
+
+// SCRAM-SHA-256 user
+try { adminDb.dropUser('scramUser256'); } catch (e) { /* ignore if not exists */ }
+adminDb.createUser({
+  user: 'scramUser256',
+  pwd: 'testpass256',
+  roles: [
+    { role: 'readWrite', db: 'demo' },
+    { role: 'read', db: 'admin' },
+  ],
+  mechanisms: ['SCRAM-SHA-256'],
+});
+print('  Created SCRAM-SHA-256 user: scramUser256');
+
+// SCRAM-SHA-1 user
+try { adminDb.dropUser('scramUser1'); } catch (e) { /* ignore if not exists */ }
+adminDb.createUser({
+  user: 'scramUser1',
+  pwd: 'testpass1',
+  roles: [
+    { role: 'readWrite', db: 'demo' },
+    { role: 'read', db: 'admin' },
+  ],
+  mechanisms: ['SCRAM-SHA-1'],
+});
+print('  Created SCRAM-SHA-1 user: scramUser1');
+
+// X.509 user — subject in RFC 2253 format (reversed from OpenSSL's default order).
+const externalDb = db.getSiblingDB('$external');
+const x509User = 'O=TestOrg,CN=mongodb-client';
+try { externalDb.dropUser(x509User); } catch (e) { /* ignore if not exists */ }
+externalDb.createUser({
+  user: x509User,
+  roles: [
+    { role: 'readWrite', db: 'demo' },
+    { role: 'read', db: 'admin' },
+  ],
+});
+print('  Created X.509 user: ' + x509User);
+
 print('Seed complete!');

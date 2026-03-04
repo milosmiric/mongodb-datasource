@@ -6,7 +6,7 @@
  */
 import { ChangeEvent } from 'react';
 import { DataSourcePluginOptionsEditorProps } from '@grafana/data';
-import { InlineField, Input, SecretInput, InlineSwitch, Combobox, ComboboxOption, TextArea, FieldSet } from '@grafana/ui';
+import { InlineField, Input, SecretInput, InlineSwitch, Combobox, ComboboxOption, TextArea, FieldSet, Button } from '@grafana/ui';
 
 import { MongoDBDataSourceOptions, MongoDBSecureJsonData, AuthMechanism } from '../../types';
 
@@ -120,6 +120,64 @@ export function ConfigEditor(props: ConfigEditorProps) {
     });
   };
 
+  const onUsernameChange = (event: ChangeEvent<HTMLInputElement>) => {
+    onOptionsChange({
+      ...options,
+      jsonData: {
+        ...jsonData,
+        username: event.target.value,
+      },
+    });
+  };
+
+  const onClientCertChange = (event: ChangeEvent<HTMLTextAreaElement>) => {
+    onOptionsChange({
+      ...options,
+      secureJsonData: {
+        ...secureJsonData,
+        tlsClientCert: event.target.value,
+      },
+    });
+  };
+
+  const onClientCertReset = () => {
+    onOptionsChange({
+      ...options,
+      secureJsonFields: {
+        ...secureJsonFields,
+        tlsClientCert: false,
+      },
+      secureJsonData: {
+        ...secureJsonData,
+        tlsClientCert: '',
+      },
+    });
+  };
+
+  const onClientKeyChange = (event: ChangeEvent<HTMLTextAreaElement>) => {
+    onOptionsChange({
+      ...options,
+      secureJsonData: {
+        ...secureJsonData,
+        tlsClientKey: event.target.value,
+      },
+    });
+  };
+
+  const onClientKeyReset = () => {
+    onOptionsChange({
+      ...options,
+      secureJsonFields: {
+        ...secureJsonFields,
+        tlsClientKey: false,
+      },
+      secureJsonData: {
+        ...secureJsonData,
+        tlsClientKey: '',
+      },
+    });
+  };
+
   const onCACertChange = (event: ChangeEvent<HTMLTextAreaElement>) => {
     onOptionsChange({
       ...options,
@@ -172,16 +230,59 @@ export function ConfigEditor(props: ConfigEditorProps) {
         </InlineField>
 
         {jsonData.authMechanism && jsonData.authMechanism !== 'MONGODB-X509' && (
-          <InlineField label="Password" labelWidth={LABEL_WIDTH} tooltip="MongoDB password">
-            <SecretInput
-              isConfigured={secureJsonFields?.password ?? false}
-              value={secureJsonData?.password ?? ''}
-              placeholder="password"
-              width={40}
-              onReset={onPasswordReset}
-              onChange={onPasswordChange}
-            />
-          </InlineField>
+          <>
+            <InlineField label="Username" labelWidth={LABEL_WIDTH} tooltip="MongoDB username">
+              <Input
+                value={jsonData.username ?? ''}
+                placeholder="username"
+                width={40}
+                onChange={onUsernameChange}
+              />
+            </InlineField>
+
+            <InlineField label="Password" labelWidth={LABEL_WIDTH} tooltip="MongoDB password">
+              <SecretInput
+                isConfigured={secureJsonFields?.password ?? false}
+                value={secureJsonData?.password ?? ''}
+                placeholder="password"
+                width={40}
+                onReset={onPasswordReset}
+                onChange={onPasswordChange}
+              />
+            </InlineField>
+          </>
+        )}
+
+        {jsonData.authMechanism === 'MONGODB-X509' && (
+          <>
+            <InlineField label="Client Certificate" labelWidth={LABEL_WIDTH} tooltip="PEM-encoded client certificate for X.509 auth">
+              {secureJsonFields?.tlsClientCert ? (
+                <Button variant="secondary" onClick={onClientCertReset}>Reset</Button>
+              ) : (
+                <TextArea
+                  value={secureJsonData?.tlsClientCert ?? ''}
+                  placeholder="-----BEGIN CERTIFICATE-----"
+                  rows={5}
+                  cols={60}
+                  onChange={onClientCertChange}
+                />
+              )}
+            </InlineField>
+
+            <InlineField label="Client Key" labelWidth={LABEL_WIDTH} tooltip="PEM-encoded client private key for X.509 auth">
+              {secureJsonFields?.tlsClientKey ? (
+                <Button variant="secondary" onClick={onClientKeyReset}>Reset</Button>
+              ) : (
+                <TextArea
+                  value={secureJsonData?.tlsClientKey ?? ''}
+                  placeholder="-----BEGIN EC PRIVATE KEY-----"
+                  rows={5}
+                  cols={60}
+                  onChange={onClientKeyChange}
+                />
+              )}
+            </InlineField>
+          </>
         )}
       </FieldSet>
 

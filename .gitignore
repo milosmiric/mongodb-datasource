@@ -31,6 +31,9 @@ __debug_bin*
 # Lint cache
 .eslintcache
 
+# Generated TLS certs
+docker/tls/certs/
+
 # Lock files we don't want
 package-lock.json
 yarn.lock

@@ -49,10 +49,14 @@ func BuildClientOptions(settings DatasourceSettings) (*options.ClientOptions, er
 	if settings.AuthMechanism != "" {
 		cred := options.Credential{
 			AuthMechanism: settings.AuthMechanism,
+			Username:      settings.Username,
 		}
-		if settings.AuthMechanism != "MONGODB-X509" {
+		if settings.AuthMechanism == "MONGODB-X509" {
+			cred.AuthSource = "$external"
+		} else {
 			cred.Password = settings.Password
 			cred.PasswordSet = true
+			cred.AuthSource = "admin"
 		}
 		clientOpts.SetAuth(cred)
 	}
@@ -65,6 +69,13 @@ func BuildClientOptions(settings DatasourceSettings) (*options.ClientOptions, er
 				return nil, ErrInvalidCACert
 			}
 			tlsCfg.RootCAs = pool
+		}
+		if settings.TLSClientCert != "" && settings.TLSClientKey != "" {
+			cert, err := tls.X509KeyPair([]byte(settings.TLSClientCert), []byte(settings.TLSClientKey))
+			if err != nil {
+				return nil, fmt.Errorf("%w: %v", ErrInvalidClientCert, err)
+			}
+			tlsCfg.Certificates = []tls.Certificate{cert}
 		}
 		clientOpts.SetTLSConfig(tlsCfg)
 	}

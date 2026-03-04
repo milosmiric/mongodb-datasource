@@ -33,4 +33,7 @@ var (
 
 	// ErrInvalidCACert indicates the CA certificate PEM could not be parsed.
 	ErrInvalidCACert = errors.New("failed to parse CA certificate PEM")
+
+	// ErrInvalidClientCert indicates the client certificate or key PEM is invalid.
+	ErrInvalidClientCert = errors.New("failed to parse client certificate/key PEM")
 )

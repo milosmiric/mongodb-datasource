@@ -137,4 +137,74 @@ describe('ConfigEditor', () => {
     render(<ConfigEditor {...propsWithAuth} />);
     expect(screen.queryByText('Password')).not.toBeInTheDocument();
   });
+
+  it('shows username field for SCRAM-SHA-256 auth', () => {
+    const propsWithAuth = {
+      ...defaultProps,
+      options: {
+        ...defaultProps.options,
+        jsonData: { authMechanism: 'SCRAM-SHA-256' as const },
+      },
+    };
+
+    render(<ConfigEditor {...propsWithAuth} />);
+    expect(screen.getByText('Username')).toBeInTheDocument();
+  });
+
+  it('hides username field for X509 auth', () => {
+    const propsWithAuth = {
+      ...defaultProps,
+      options: {
+        ...defaultProps.options,
+        jsonData: { authMechanism: 'MONGODB-X509' as const },
+      },
+    };
+
+    render(<ConfigEditor {...propsWithAuth} />);
+    expect(screen.queryByText('Username')).not.toBeInTheDocument();
+  });
+
+  it('shows client cert fields for X509 auth', () => {
+    const propsWithAuth = {
+      ...defaultProps,
+      options: {
+        ...defaultProps.options,
+        jsonData: { authMechanism: 'MONGODB-X509' as const },
+      },
+    };
+
+    render(<ConfigEditor {...propsWithAuth} />);
+    expect(screen.getByText('Client Certificate')).toBeInTheDocument();
+    expect(screen.getByText('Client Key')).toBeInTheDocument();
+    expect(screen.getByPlaceholderText('-----BEGIN CERTIFICATE-----')).toBeInTheDocument();
+  });
+
+  it('shows reset button for configured client cert', () => {
+    const propsWithConfigured = {
+      ...defaultProps,
+      options: {
+        ...defaultProps.options,
+        jsonData: { authMechanism: 'MONGODB-X509' as const },
+        secureJsonFields: { tlsClientCert: true, tlsClientKey: true },
+      },
+    };
+
+    render(<ConfigEditor {...propsWithConfigured} />);
+    const resetButtons = screen.getAllByText('Reset');
+    expect(resetButtons.length).toBe(2);
+  });
+
+  it('hides client cert fields for SCRAM auth', () => {
+    const propsWithAuth = {
+      ...defaultProps,
+      options: {
+        ...defaultProps.options,
+        jsonData: { authMechanism: 'SCRAM-SHA-256' as const },
+      },
+    };
+
+    render(<ConfigEditor {...propsWithAuth} />);
+    expect(screen.queryByText('Client Certificate')).not.toBeInTheDocument();
+    expect(screen.queryByText('Client Key')).not.toBeInTheDocument();
+  });
 });

@@ -50,6 +50,8 @@ export interface MongoDBDataSourceOptions extends DataSourceJsonData {
   tlsCaCert?: string;
   /** The authentication mechanism. */
   authMechanism?: AuthMechanism;
+  /** The MongoDB username for SCRAM authentication. */
+  username?: string;
 }
 
 /** AuthMechanism enumerates supported MongoDB authentication mechanisms. */
@@ -61,6 +63,10 @@ export interface MongoDBSecureJsonData {
   uri?: string;
   /** The MongoDB password. */
   password?: string;
+  /** The PEM-encoded client certificate for X.509 auth. */
+  tlsClientCert?: string;
+  /** The PEM-encoded client private key for X.509 auth. */
+  tlsClientKey?: string;
 }
 
 /** DatabaseListResponse is the API response from the /databases resource endpoint. */

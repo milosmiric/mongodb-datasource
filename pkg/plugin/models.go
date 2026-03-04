@@ -47,8 +47,14 @@ type DatasourceSettings struct {
 	TLSCACert string `json:"tlsCaCert"`
 	// AuthMechanism specifies the authentication mechanism (e.g., SCRAM-SHA-256).
 	AuthMechanism string `json:"authMechanism"`
+	// Username is the MongoDB username for SCRAM authentication.
+	Username string `json:"username"`
 	// Password is the MongoDB password extracted from secure JSON data.
 	Password string `json:"-"`
+	// TLSClientCert is the PEM-encoded client certificate for X.509 auth.
+	TLSClientCert string `json:"-"`
+	// TLSClientKey is the PEM-encoded client private key for X.509 auth.
+	TLSClientKey string `json:"-"`
 }
 
 // ParseQueryModel parses a QueryModel from a Grafana DataQuery.
@@ -78,9 +84,15 @@ func ParseDatasourceSettings(settings backend.DataSourceInstanceSettings) (Datas
 		return dsSettings, fmt.Errorf("failed to parse datasource settings: %w", err)
 	}
 
-	// Extract password from secure JSON data.
+	// Extract secrets from secure JSON data.
 	if password, ok := settings.DecryptedSecureJSONData["password"]; ok && password != "" {
 		dsSettings.Password = password
+	}
+	if cert, ok := settings.DecryptedSecureJSONData["tlsClientCert"]; ok && cert != "" {
+		dsSettings.TLSClientCert = cert
+	}
+	if key, ok := settings.DecryptedSecureJSONData["tlsClientKey"]; ok && key != "" {
+		dsSettings.TLSClientKey = key
 	}
 
 	if dsSettings.URI == "" {

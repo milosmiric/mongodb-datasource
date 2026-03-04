@@ -108,6 +108,60 @@ func generateTestCACert(t *testing.T) string {
 	return string(pem.EncodeToMemory(&pem.Block{Type: "CERTIFICATE", Bytes: certDER}))
 }
 
+// generateTestClientCert creates a client cert+key signed by the given CA for testing.
+func generateTestClientCert(t *testing.T, caCertPEM string) (certPEM, keyPEM string) {
+	t.Helper()
+
+	// Parse the CA cert.
+	block, _ := pem.Decode([]byte(caCertPEM))
+	require.NotNil(t, block)
+	caCert, err := x509.ParseCertificate(block.Bytes)
+	require.NoError(t, err)
+
+	// We need the CA key — generate a fresh CA for this helper.
+	caKey, err := ecdsa.GenerateKey(elliptic.P256(), rand.Reader)
+	require.NoError(t, err)
+
+	caTemplate := x509.Certificate{
+		SerialNumber: big.NewInt(100),
+		Subject:      pkix.Name{CommonName: "Test CA"},
+		NotBefore:    time.Now(),
+		NotAfter:     time.Now().Add(time.Hour),
+		IsCA:         true,
+		KeyUsage:     x509.KeyUsageCertSign,
+	}
+	caDER, err := x509.CreateCertificate(rand.Reader, &caTemplate, &caTemplate, &caKey.PublicKey, caKey)
+	require.NoError(t, err)
+	_ = caCert // We use our own CA for signing.
+
+	caCertForSign, err := x509.ParseCertificate(caDER)
+	require.NoError(t, err)
+
+	// Generate client key and cert.
+	clientKey, err := ecdsa.GenerateKey(elliptic.P256(), rand.Reader)
+	require.NoError(t, err)
+
+	clientTemplate := x509.Certificate{
+		SerialNumber: big.NewInt(200),
+		Subject:      pkix.Name{CommonName: "mongodb-client", Organization: []string{"TestOrg"}},
+		NotBefore:    time.Now(),
+		NotAfter:     time.Now().Add(time.Hour),
+		KeyUsage:     x509.KeyUsageDigitalSignature,
+		ExtKeyUsage:  []x509.ExtKeyUsage{x509.ExtKeyUsageClientAuth},
+	}
+
+	clientDER, err := x509.CreateCertificate(rand.Reader, &clientTemplate, caCertForSign, &clientKey.PublicKey, caKey)
+	require.NoError(t, err)
+
+	certPEM = string(pem.EncodeToMemory(&pem.Block{Type: "CERTIFICATE", Bytes: clientDER}))
+
+	keyDER, err := x509.MarshalECPrivateKey(clientKey)
+	require.NoError(t, err)
+	keyPEM = string(pem.EncodeToMemory(&pem.Block{Type: "EC PRIVATE KEY", Bytes: keyDER}))
+
+	return certPEM, keyPEM
+}
+
 func TestBuildClientOptions(t *testing.T) {
 	validCACert := generateTestCACert(t)
 
@@ -138,6 +192,7 @@ func TestBuildClientOptions(t *testing.T) {
 				require.NotNil(t, opts.Auth)
 				assert.Equal(t, "SCRAM-SHA-256", opts.Auth.AuthMechanism)
 				assert.Equal(t, "secret", opts.Auth.Password)
+				assert.Equal(t, "admin", opts.Auth.AuthSource)
 				assert.True(t, opts.Auth.PasswordSet)
 			},
 		},
@@ -152,6 +207,7 @@ func TestBuildClientOptions(t *testing.T) {
 				require.NotNil(t, opts.Auth)
 				assert.Equal(t, "SCRAM-SHA-1", opts.Auth.AuthMechanism)
 				assert.Equal(t, "secret", opts.Auth.Password)
+				assert.Equal(t, "admin", opts.Auth.AuthSource)
 				assert.True(t, opts.Auth.PasswordSet)
 			},
 		},
@@ -164,6 +220,7 @@ func TestBuildClientOptions(t *testing.T) {
 			checkOpts: func(t *testing.T, opts *options.ClientOptions) {
 				require.NotNil(t, opts.Auth)
 				assert.Equal(t, "MONGODB-X509", opts.Auth.AuthMechanism)
+				assert.Equal(t, "$external", opts.Auth.AuthSource)
 				assert.False(t, opts.Auth.PasswordSet)
 			},
 		},
@@ -223,6 +280,50 @@ func TestBuildClientOptions(t *testing.T) {
 				require.NotNil(t, opts.TLSConfig)
 				assert.NotNil(t, opts.TLSConfig.RootCAs)
 			},
+		},
+		{
+			name: "SCRAM-SHA-256 with username",
+			settings: DatasourceSettings{
+				URI:           "mongodb://localhost:27017",
+				AuthMechanism: "SCRAM-SHA-256",
+				Username:      "myuser",
+				Password:      "secret",
+			},
+			checkOpts: func(t *testing.T, opts *options.ClientOptions) {
+				require.NotNil(t, opts.Auth)
+				assert.Equal(t, "myuser", opts.Auth.Username)
+				assert.Equal(t, "admin", opts.Auth.AuthSource)
+			},
+		},
+		{
+			name: "X.509 with client cert",
+			settings: func() DatasourceSettings {
+				clientCert, clientKey := generateTestClientCert(t, validCACert)
+				return DatasourceSettings{
+					URI:           "mongodb://localhost:27017",
+					AuthMechanism: "MONGODB-X509",
+					TLSEnabled:    true,
+					TLSCACert:     validCACert,
+					TLSClientCert: clientCert,
+					TLSClientKey:  clientKey,
+				}
+			}(),
+			checkOpts: func(t *testing.T, opts *options.ClientOptions) {
+				require.NotNil(t, opts.Auth)
+				assert.Equal(t, "$external", opts.Auth.AuthSource)
+				require.NotNil(t, opts.TLSConfig)
+				assert.Len(t, opts.TLSConfig.Certificates, 1)
+			},
+		},
+		{
+			name: "invalid client cert returns error",
+			settings: DatasourceSettings{
+				URI:           "mongodb://localhost:27017",
+				TLSEnabled:    true,
+				TLSClientCert: "not-a-cert",
+				TLSClientKey:  "not-a-key",
+			},
+			wantErr: ErrInvalidClientCert,
 		},
 	}
 
