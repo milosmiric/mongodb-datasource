@@ -9,7 +9,7 @@ GOOS         ?= $(shell go env GOOS)
 GOARCH       ?= $(shell go env GOARCH)
 DIST         := dist
 MONGO_HOST   := localhost
-MONGO_PORT   := 27020
+MONGO_PORT   := 27105
 GRAFANA_PORT := 3105
 
 .DEFAULT_GOAL := help

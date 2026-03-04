@@ -93,18 +93,18 @@ func TestParseDatasourceSettings(t *testing.T) {
 	}{
 		{
 			name:     "valid settings with URI in JSON",
-			jsonData: `{"uri":"mongodb://localhost:27020","database":"demo","isSrv":false,"tlsEnabled":false}`,
+			jsonData: `{"uri":"mongodb://localhost:27105","database":"demo","isSrv":false,"tlsEnabled":false}`,
 			wantSettings: DatasourceSettings{
-				URI:      "mongodb://localhost:27020",
+				URI:      "mongodb://localhost:27105",
 				Database: "demo",
 			},
 		},
 		{
 			name:       "URI from secure JSON data",
 			jsonData:   `{"database":"demo"}`,
-			secureData: map[string]string{"uri": "mongodb://user:pass@host:27020"},
+			secureData: map[string]string{"uri": "mongodb://user:pass@host:27105"},
 			wantSettings: DatasourceSettings{
-				URI:      "mongodb://user:pass@host:27020",
+				URI:      "mongodb://user:pass@host:27105",
 				Database: "demo",
 			},
 		},
@@ -116,6 +116,24 @@ func TestParseDatasourceSettings(t *testing.T) {
 		{
 			name:     "invalid JSON returns error",
 			jsonData: `{invalid}`,
+		},
+		{
+			name:       "password extracted from secure data",
+			jsonData:   `{"uri":"mongodb://localhost:27105","database":"demo"}`,
+			secureData: map[string]string{"password": "secret123"},
+			wantSettings: DatasourceSettings{
+				URI:      "mongodb://localhost:27105",
+				Database: "demo",
+				Password: "secret123",
+			},
+		},
+		{
+			name:     "empty password when not provided",
+			jsonData: `{"uri":"mongodb://localhost:27105","database":"demo"}`,
+			wantSettings: DatasourceSettings{
+				URI:      "mongodb://localhost:27105",
+				Database: "demo",
+			},
 		},
 		{
 			name:     "SRV and TLS settings",

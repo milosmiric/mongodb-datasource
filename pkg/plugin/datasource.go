@@ -2,6 +2,8 @@ package plugin
 
 import (
 	"context"
+	"crypto/tls"
+	"crypto/x509"
 	"encoding/json"
 	"fmt"
 	"net/http"
@@ -39,9 +41,44 @@ type DefaultMongoClient struct {
 	client *mongo.Client
 }
 
-// NewDefaultMongoClient creates a new DefaultMongoClient from a connection URI.
-func NewDefaultMongoClient(ctx context.Context, uri string) (*DefaultMongoClient, error) {
-	clientOpts := options.Client().ApplyURI(uri)
+// BuildClientOptions constructs MongoDB client options from datasource settings.
+// It applies authentication credentials and TLS configuration based on the settings.
+func BuildClientOptions(settings DatasourceSettings) (*options.ClientOptions, error) {
+	clientOpts := options.Client().ApplyURI(settings.URI)
+
+	if settings.AuthMechanism != "" {
+		cred := options.Credential{
+			AuthMechanism: settings.AuthMechanism,
+		}
+		if settings.AuthMechanism != "MONGODB-X509" {
+			cred.Password = settings.Password
+			cred.PasswordSet = true
+		}
+		clientOpts.SetAuth(cred)
+	}
+
+	if settings.TLSEnabled {
+		tlsCfg := &tls.Config{}
+		if settings.TLSCACert != "" {
+			pool := x509.NewCertPool()
+			if !pool.AppendCertsFromPEM([]byte(settings.TLSCACert)) {
+				return nil, ErrInvalidCACert
+			}
+			tlsCfg.RootCAs = pool
+		}
+		clientOpts.SetTLSConfig(tlsCfg)
+	}
+
+	return clientOpts, nil
+}
+
+// NewDefaultMongoClient creates a new DefaultMongoClient from datasource settings.
+func NewDefaultMongoClient(ctx context.Context, settings DatasourceSettings) (*DefaultMongoClient, error) {
+	clientOpts, err := BuildClientOptions(settings)
+	if err != nil {
+		return nil, fmt.Errorf("building client options: %w", err)
+	}
+
 	client, err := mongo.Connect(clientOpts)
 	if err != nil {
 		return nil, fmt.Errorf("connecting to MongoDB: %w", err)
@@ -147,7 +184,7 @@ func NewDatasource(ctx context.Context, settings backend.DataSourceInstanceSetti
 		return nil, fmt.Errorf("parsing datasource settings: %w", err)
 	}
 
-	client, err := NewDefaultMongoClient(ctx, dsSettings.URI)
+	client, err := NewDefaultMongoClient(ctx, dsSettings)
 	if err != nil {
 		log.DefaultLogger.Error("failed to create MongoDB client", "error", err)
 		// Return the datasource anyway so it can report errors via health check.

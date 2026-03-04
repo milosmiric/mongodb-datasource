@@ -30,4 +30,7 @@ var (
 
 	// ErrUnsupportedBSONType indicates a BSON type that cannot be converted to a DataFrame value.
 	ErrUnsupportedBSONType = errors.New("unsupported BSON type")
+
+	// ErrInvalidCACert indicates the CA certificate PEM could not be parsed.
+	ErrInvalidCACert = errors.New("failed to parse CA certificate PEM")
 )

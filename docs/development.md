@@ -38,7 +38,7 @@ The development environment uses non-standard ports to avoid conflicts:
 | Service | Port | Default |
 |---------|------|---------|
 | Grafana | **3105** | 3000 |
-| MongoDB | **27020** | 27017 |
+| MongoDB | **27105** | 27017 |
 | Delve (Go debugger) | **2345** | 2345 |
 
 ## Project Structure

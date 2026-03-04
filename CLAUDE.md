@@ -27,7 +27,7 @@ Open-source Grafana datasource plugin for MongoDB. Plugin ID: `milosmiric-mongod
 ## Ports
 
 - Grafana: **3105** (not 3000)
-- MongoDB: **27020** (not 27017)
+- MongoDB: **27105** (not 27017)
 - Delve debugger: **2345**
 
 ## Commands

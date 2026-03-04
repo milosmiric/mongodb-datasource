@@ -94,6 +94,37 @@ describe('ConfigEditor', () => {
     expect(screen.getByText('Password')).toBeInTheDocument();
   });
 
+  it('shows password field for SCRAM-SHA-1 auth', () => {
+    const propsWithAuth = {
+      ...defaultProps,
+      options: {
+        ...defaultProps.options,
+        jsonData: { authMechanism: 'SCRAM-SHA-1' as const },
+      },
+    };
+
+    render(<ConfigEditor {...propsWithAuth} />);
+    expect(screen.getByText('Password')).toBeInTheDocument();
+  });
+
+  it('hides password field when auth mechanism is None (empty string)', () => {
+    const propsWithAuth = {
+      ...defaultProps,
+      options: {
+        ...defaultProps.options,
+        jsonData: { authMechanism: '' },
+      },
+    };
+
+    render(<ConfigEditor {...propsWithAuth} />);
+    expect(screen.queryByText('Password')).not.toBeInTheDocument();
+  });
+
+  it('hides password field when auth mechanism is not set', () => {
+    render(<ConfigEditor {...defaultProps} />);
+    expect(screen.queryByText('Password')).not.toBeInTheDocument();
+  });
+
   it('hides password field for X509 auth', () => {
     const propsWithAuth = {
       ...defaultProps,
