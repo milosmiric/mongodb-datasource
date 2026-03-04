@@ -72,21 +72,21 @@ export async function openNewPanelEditor(page: Page): Promise<void> {
 }
 
 /**
- * Click on a Grafana Select dropdown by its placeholder text.
+ * Click on a Grafana Combobox dropdown by its placeholder text.
  * Uses force:true to bypass overlay interception issues.
  */
 export async function clickSelect(page: Page, placeholder: string): Promise<void> {
-  await page.getByText(placeholder).click({ force: true });
+  await page.getByPlaceholder(placeholder).click({ force: true });
 }
 
 /**
- * Select a value from a Grafana Select dropdown.
+ * Select a value from a Grafana Combobox dropdown.
  * Types to filter options (handles dropdowns with many items), then clicks the match.
  */
 export async function selectOption(page: Page, placeholder: string, value: string): Promise<void> {
   await clickSelect(page, placeholder);
   await page.keyboard.type(value, { delay: 30 });
-  await page.getByText(value, { exact: true }).click();
+  await page.getByRole('option', { name: value }).click();
 }
 
 /**

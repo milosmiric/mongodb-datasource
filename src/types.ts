@@ -4,7 +4,8 @@
  * Defines query models, datasource options, and API response types used
  * throughout the frontend components and hooks.
  */
-import { DataQuery, DataSourceJsonData } from '@grafana/data';
+import { DataSourceJsonData } from '@grafana/data';
+import { DataQuery } from '@grafana/schema';
 
 /** QueryFormatType specifies the output format for query results. */
 export type QueryFormatType = 'table' | 'time_series';

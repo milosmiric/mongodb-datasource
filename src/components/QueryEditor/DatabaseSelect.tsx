@@ -4,8 +4,7 @@
  * Fetches the list of available databases from the backend
  * and renders a searchable dropdown.
  */
-import { SelectableValue } from '@grafana/data';
-import { InlineField, Select, Alert } from '@grafana/ui';
+import { Combobox, ComboboxOption, InlineField, Alert } from '@grafana/ui';
 
 import { DataSource } from '../../datasource';
 import { useDatabases } from '../../hooks/useDatabases';
@@ -26,26 +25,24 @@ interface DatabaseSelectProps {
 export function DatabaseSelect({ datasource, value, onChange }: DatabaseSelectProps) {
   const { databases, loading, error } = useDatabases(datasource);
 
-  const options: Array<SelectableValue<string>> = databases.map((db) => ({
+  const options: Array<ComboboxOption<string>> = databases.map((db) => ({
     label: db,
     value: db,
   }));
 
-  const selected = options.find((o) => o.value === value) ?? (value ? { label: value, value } : undefined);
-
   return (
     <>
       <InlineField label="Database" labelWidth={14} tooltip="Select the MongoDB database to query">
-        <Select
-          inputId="mongodb-database-select"
+        <Combobox
+          id="mongodb-database-select"
           options={options}
-          value={selected}
-          onChange={(v) => onChange(v.value ?? '')}
-          isLoading={loading}
+          value={value || null}
+          onChange={(option) => onChange(option?.value ?? '')}
+          loading={loading}
           isClearable
           placeholder="Select database"
           width={30}
-          allowCustomValue
+          createCustomValue
         />
       </InlineField>
       {error && <Alert title="Database fetch error" severity="error">{error}</Alert>}

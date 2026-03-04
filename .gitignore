@@ -28,6 +28,9 @@ vendor/
 # Debug
 __debug_bin*
 
+# Lint cache
+.eslintcache
+
 # Lock files we don't want
 package-lock.json
 yarn.lock

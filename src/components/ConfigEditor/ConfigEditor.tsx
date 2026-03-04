@@ -5,15 +5,15 @@
  * authentication, and TLS settings.
  */
 import { ChangeEvent } from 'react';
-import { DataSourcePluginOptionsEditorProps, SelectableValue } from '@grafana/data';
-import { InlineField, Input, SecretInput, InlineSwitch, Select, TextArea, FieldSet } from '@grafana/ui';
+import { DataSourcePluginOptionsEditorProps } from '@grafana/data';
+import { InlineField, Input, SecretInput, InlineSwitch, Combobox, ComboboxOption, TextArea, FieldSet } from '@grafana/ui';
 
 import { MongoDBDataSourceOptions, MongoDBSecureJsonData, AuthMechanism } from '../../types';
 
 /** Props for the ConfigEditor component. */
 type ConfigEditorProps = DataSourcePluginOptionsEditorProps<MongoDBDataSourceOptions, MongoDBSecureJsonData>;
 
-const AUTH_MECHANISMS: Array<SelectableValue<AuthMechanism>> = [
+const AUTH_MECHANISMS: Array<ComboboxOption<AuthMechanism>> = [
   { label: 'None', value: '' },
   { label: 'SCRAM-SHA-256', value: 'SCRAM-SHA-256' },
   { label: 'SCRAM-SHA-1', value: 'SCRAM-SHA-1' },
@@ -66,12 +66,12 @@ export function ConfigEditor(props: ConfigEditorProps) {
     });
   };
 
-  const onAuthMechanismChange = (value: SelectableValue<AuthMechanism>) => {
+  const onAuthMechanismChange = (option: ComboboxOption<AuthMechanism>) => {
     onOptionsChange({
       ...options,
       jsonData: {
         ...jsonData,
-        authMechanism: value.value,
+        authMechanism: option.value,
       },
     });
   };
@@ -163,9 +163,9 @@ export function ConfigEditor(props: ConfigEditorProps) {
 
       <FieldSet label="Authentication">
         <InlineField label="Auth Mechanism" labelWidth={LABEL_WIDTH} tooltip="MongoDB authentication mechanism">
-          <Select
+          <Combobox
             options={AUTH_MECHANISMS}
-            value={AUTH_MECHANISMS.find((m) => m.value === (jsonData.authMechanism ?? '')) ?? AUTH_MECHANISMS[0]}
+            value={jsonData.authMechanism ?? ''}
             onChange={onAuthMechanismChange}
             width={40}
           />

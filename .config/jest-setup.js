@@ -21,5 +21,11 @@ if (typeof TextEncoder === 'undefined') {
   global.TextDecoder = TextDecoder;
 }
 
+// Mock HTMLCanvasElement.getContext for Combobox's measureText usage.
+HTMLCanvasElement.prototype.getContext = () => ({
+  measureText: (text) => ({ width: text.length * 8 }),
+  font: '',
+});
+
 // Import jest-dom matchers.
 require('@testing-library/jest-dom');

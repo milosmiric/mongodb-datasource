@@ -3,8 +3,7 @@
  *
  * Fetches the list of collections for the selected database from the backend.
  */
-import { SelectableValue } from '@grafana/data';
-import { InlineField, Select, Alert } from '@grafana/ui';
+import { Combobox, ComboboxOption, InlineField, Alert } from '@grafana/ui';
 
 import { DataSource } from '../../datasource';
 import { useCollections } from '../../hooks/useCollections';
@@ -27,27 +26,25 @@ interface CollectionSelectProps {
 export function CollectionSelect({ datasource, database, value, onChange }: CollectionSelectProps) {
   const { collections, loading, error } = useCollections(datasource, database);
 
-  const options: Array<SelectableValue<string>> = collections.map((c) => ({
+  const options: Array<ComboboxOption<string>> = collections.map((c) => ({
     label: c,
     value: c,
   }));
 
-  const selected = options.find((o) => o.value === value) ?? (value ? { label: value, value } : undefined);
-
   return (
     <>
       <InlineField label="Collection" labelWidth={14} tooltip="Select the MongoDB collection to query">
-        <Select
-          inputId="mongodb-collection-select"
+        <Combobox
+          id="mongodb-collection-select"
           options={options}
-          value={selected}
-          onChange={(v) => onChange(v.value ?? '')}
-          isLoading={loading}
+          value={value || null}
+          onChange={(option) => onChange(option?.value ?? '')}
+          loading={loading}
           isClearable
           disabled={!database}
           placeholder={database ? 'Select collection' : 'Select a database first'}
           width={30}
-          allowCustomValue
+          createCustomValue
         />
       </InlineField>
       {error && <Alert title="Collection fetch error" severity="error">{error}</Alert>}
