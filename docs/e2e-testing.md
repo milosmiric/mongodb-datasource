@@ -51,13 +51,14 @@ await page.locator('label', { hasText: 'Pipeline' }).click({ force: true }); // 
 ### onRunQuery Doesn't Always Execute
 In a new (unsaved) panel, `onRunQuery()` called from component onChange may not trigger a backend call. Use the RefreshPicker run button to explicitly trigger execution.
 
-### Select Dropdowns Need Type-to-Filter
-Grafana Select dropdowns may render options outside the viewport. Type to filter:
+### Combobox Dropdowns (formerly Select)
+We use Grafana's `Combobox` component (replaced deprecated `Select`). Combobox renders an `<input>` element, so use `getByPlaceholder` (not `getByText`) to locate it, and `getByRole('option')` to click options:
 ```typescript
-await page.getByText(placeholder).click({ force: true });
+await page.getByPlaceholder('Select database').click({ force: true });
 await page.keyboard.type(value, { delay: 30 });
-await page.getByText(value, { exact: true }).click();
+await page.getByRole('option', { name: value }).click();
 ```
+Key differences from Select: placeholder text lives in the `<input>` element (invisible to `getByText`), and dropdown options use ARIA `option` role.
 
 ### force: true Required for Overlapped Elements
 The viz picker sidebar and portal containers can intercept clicks. Use `{ force: true }` for clicks on query editor elements that might be partially covered.
