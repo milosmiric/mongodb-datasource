@@ -1,0 +1,8 @@
+{
+  "database": "demo",
+  "collection": "sensors",
+  "pipeline": "[{\"$match\": {\"sensor\": \"temperature\"}}, {\"$sort\": {\"timestamp\": 1}}, {\"$limit\": 100}]",
+  "timeField": "timestamp",
+  "format": "time_series",
+  "legendFormat": "{{location}}"
+}

@@ -1,0 +1,8 @@
+{
+  "uri": "mongodb://localhost:27020",
+  "database": "demo",
+  "isSrv": false,
+  "tlsEnabled": false,
+  "tlsCaCert": "",
+  "authMechanism": ""
+}

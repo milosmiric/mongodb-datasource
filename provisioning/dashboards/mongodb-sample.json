@@ -1,0 +1,159 @@
+{
+  "annotations": {
+    "list": []
+  },
+  "editable": true,
+  "fiscalYearStartMonth": 0,
+  "graphTooltip": 1,
+  "id": null,
+  "links": [],
+  "panels": [
+    {
+      "title": "Sensor Readings Over Time",
+      "type": "timeseries",
+      "datasource": {
+        "type": "milosmiric-mongodb-datasource",
+        "uid": "mongodb-demo"
+      },
+      "gridPos": { "h": 10, "w": 16, "x": 0, "y": 0 },
+      "targets": [
+        {
+          "refId": "A",
+          "database": "demo",
+          "collection": "sensors",
+          "pipeline": "[{\"$match\": {\"sensor\": \"temperature\", \"timestamp\": {\"$gte\": {\"$date\": \"$__from\"}, \"$lte\": {\"$date\": \"$__to\"}}}}, {\"$sort\": {\"timestamp\": 1}}, {\"$project\": {\"_id\": 0, \"timestamp\": 1, \"value\": 1, \"location\": 1}}]",
+          "timeField": "timestamp",
+          "format": "time_series",
+          "legendFormat": "{{location}}"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "custom": {
+            "drawStyle": "line",
+            "lineInterpolation": "smooth",
+            "fillOpacity": 10
+          },
+          "unit": "celsius"
+        },
+        "overrides": []
+      },
+      "options": {
+        "tooltip": { "mode": "multi" },
+        "legend": { "displayMode": "table", "placement": "bottom" }
+      }
+    },
+    {
+      "title": "Total Sensor Readings",
+      "type": "stat",
+      "datasource": {
+        "type": "milosmiric-mongodb-datasource",
+        "uid": "mongodb-demo"
+      },
+      "gridPos": { "h": 5, "w": 8, "x": 16, "y": 0 },
+      "targets": [
+        {
+          "refId": "A",
+          "database": "demo",
+          "collection": "sensors",
+          "pipeline": "[{\"$count\": \"total\"}]",
+          "timeField": "",
+          "format": "table",
+          "legendFormat": ""
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              { "color": "green", "value": null },
+              { "color": "yellow", "value": 500 },
+              { "color": "red", "value": 900 }
+            ]
+          }
+        },
+        "overrides": []
+      },
+      "options": {
+        "reduceOptions": {
+          "calcs": ["lastNotNull"],
+          "fields": "/^total$/",
+          "values": false
+        },
+        "colorMode": "value",
+        "graphMode": "none",
+        "textMode": "auto"
+      }
+    },
+    {
+      "title": "Recent Events",
+      "type": "table",
+      "datasource": {
+        "type": "milosmiric-mongodb-datasource",
+        "uid": "mongodb-demo"
+      },
+      "gridPos": { "h": 5, "w": 8, "x": 16, "y": 5 },
+      "targets": [
+        {
+          "refId": "A",
+          "database": "demo",
+          "collection": "events",
+          "pipeline": "[{\"$sort\": {\"timestamp\": -1}}, {\"$limit\": 20}, {\"$project\": {\"_id\": 0, \"timestamp\": 1, \"type\": 1, \"userId\": 1, \"ip\": 1}}]",
+          "timeField": "",
+          "format": "table",
+          "legendFormat": ""
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {},
+        "overrides": []
+      },
+      "options": {
+        "showHeader": true,
+        "sortBy": [{ "displayName": "timestamp", "desc": true }]
+      }
+    },
+    {
+      "title": "Users Table",
+      "type": "table",
+      "datasource": {
+        "type": "milosmiric-mongodb-datasource",
+        "uid": "mongodb-demo"
+      },
+      "gridPos": { "h": 8, "w": 24, "x": 0, "y": 10 },
+      "targets": [
+        {
+          "refId": "A",
+          "database": "demo",
+          "collection": "users",
+          "pipeline": "[{\"$project\": {\"_id\": 0, \"name\": 1, \"email\": 1, \"role\": 1, \"active\": 1, \"loginCount\": 1, \"lastLogin\": 1, \"tags\": 1}}]",
+          "timeField": "",
+          "format": "table",
+          "legendFormat": ""
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {},
+        "overrides": []
+      },
+      "options": {
+        "showHeader": true
+      }
+    }
+  ],
+  "schemaVersion": 39,
+  "tags": ["mongodb", "demo"],
+  "templating": {
+    "list": []
+  },
+  "time": {
+    "from": "now-24h",
+    "to": "now"
+  },
+  "timepicker": {},
+  "timezone": "browser",
+  "title": "MongoDB Sample Dashboard",
+  "uid": "mongodb-sample",
+  "version": 1
+}

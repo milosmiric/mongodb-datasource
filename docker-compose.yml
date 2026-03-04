@@ -1,0 +1,60 @@
+services:
+  grafana:
+    image: grafana/grafana-oss:latest
+    ports:
+      - "3105:3000"
+    environment:
+      - GF_DEFAULT_APP_MODE=development
+      - GF_PLUGINS_ALLOW_LOADING_UNSIGNED_PLUGINS=milosmiric-mongodb-datasource
+      - GF_LOG_LEVEL=debug
+      - GF_AUTH_ANONYMOUS_ENABLED=true
+      - GF_AUTH_ANONYMOUS_ORG_ROLE=Admin
+      - GF_SECURITY_ADMIN_USER=admin
+      - GF_SECURITY_ADMIN_PASSWORD=admin
+    volumes:
+      - ./dist:/var/lib/grafana/plugins/milosmiric-mongodb-datasource
+      - ./provisioning:/etc/grafana/provisioning
+    depends_on:
+      mongodb:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "wget", "--spider", "--quiet", "http://localhost:3000/api/health"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  mongodb:
+    image: mongo:8
+    ports:
+      - "27020:27017"
+    command: ["mongod", "--replSet", "rs0", "--bind_ip_all"]
+    healthcheck:
+      test: |
+        mongosh --eval "
+          try {
+            rs.status().ok
+          } catch(e) {
+            rs.initiate({_id: 'rs0', members: [{_id: 0, host: 'mongodb:27017'}]});
+            sleep(2000);
+            rs.status().ok
+          }
+        " --quiet
+      interval: 5s
+      timeout: 10s
+      retries: 10
+    volumes:
+      - mongodb_data:/data/db
+      - ./docker/mongo-seed:/seed
+
+  mongo-seed:
+    image: mongo:8
+    depends_on:
+      mongodb:
+        condition: service_healthy
+    volumes:
+      - ./docker/mongo-seed:/seed
+    entrypoint: ["mongosh", "--host", "mongodb:27017", "--file", "/seed/seed.js"]
+    restart: "no"
+
+volumes:
+  mongodb_data:

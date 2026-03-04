@@ -1,0 +1,45 @@
+{
+  "$schema": "https://raw.githubusercontent.com/grafana/grafana/main/docs/sources/developers/plugins/plugin.schema.json",
+  "type": "datasource",
+  "name": "MongoDB",
+  "id": "milosmiric-mongodb-datasource",
+  "metrics": true,
+  "backend": true,
+  "executable": "gpx_mongodb-datasource",
+  "alerting": true,
+  "info": {
+    "description": "MongoDB datasource plugin for Grafana. Query MongoDB collections using aggregation pipelines.",
+    "author": {
+      "name": "Miloš Mirić",
+      "url": "https://github.com/milosmiric"
+    },
+    "keywords": [
+      "mongodb",
+      "nosql",
+      "datasource",
+      "database",
+      "aggregation"
+    ],
+    "logos": {
+      "small": "img/logo.svg",
+      "large": "img/logo.svg"
+    },
+    "links": [
+      {
+        "name": "GitHub",
+        "url": "https://github.com/milosmiric/mongodb-datasource"
+      },
+      {
+        "name": "License",
+        "url": "https://github.com/milosmiric/mongodb-datasource/blob/main/LICENSE"
+      }
+    ],
+    "screenshots": [],
+    "version": "0.1.0",
+    "updated": "2026-03-04"
+  },
+  "dependencies": {
+    "grafanaDependency": ">=11.0.0",
+    "plugins": []
+  }
+}

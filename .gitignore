@@ -1,0 +1,34 @@
+# Build output
+dist/
+artifacts/
+
+# Dependencies
+node_modules/
+
+# Test output
+coverage/
+test-results/
+playwright-report/
+blob-report/
+
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo
+*~
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Go
+vendor/
+
+# Debug
+__debug_bin*
+
+# Lock files we don't want
+package-lock.json
+yarn.lock
+pnpm-lock.yaml

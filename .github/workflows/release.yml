@@ -1,0 +1,72 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - 'v*'
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    name: Build and Release
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-go@v5
+        with:
+          go-version-file: go.mod
+      - uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: latest
+
+      - name: Install dependencies
+        run: bun install --frozen-lockfile
+
+      - name: Build frontend
+        run: bun run build
+
+      - name: Build backend (all platforms)
+        run: |
+          for platform in linux/amd64 linux/arm64 darwin/amd64 darwin/arm64 windows/amd64; do
+            os="${platform%/*}"
+            arch="${platform#*/}"
+            binary="gpx_mongodb-datasource_${os}_${arch}"
+            if [ "$os" = "windows" ]; then
+              binary="${binary}.exe"
+            fi
+            echo "Building ${binary}..."
+            GOOS=$os GOARCH=$arch go build -o "dist/${binary}" ./pkg
+          done
+
+      - name: Sign plugin
+        run: bun run sign
+        env:
+          GRAFANA_ACCESS_POLICY_TOKEN: ${{ secrets.GRAFANA_ACCESS_POLICY_TOKEN }}
+
+      - name: Package plugin
+        run: |
+          PLUGIN_ID="milosmiric-mongodb-datasource"
+          VERSION="${GITHUB_REF#refs/tags/v}"
+          cd dist
+          zip -r "../${PLUGIN_ID}-${VERSION}.zip" .
+          cd ..
+          sha256sum "${PLUGIN_ID}-${VERSION}.zip" > "${PLUGIN_ID}-${VERSION}.zip.sha256"
+
+      - name: Extract changelog
+        id: changelog
+        run: |
+          VERSION="${GITHUB_REF#refs/tags/v}"
+          awk "/^## v${VERSION}/,/^## v/" CHANGELOG.md | head -n -1 > release_notes.md
+          if [ ! -s release_notes.md ]; then
+            echo "Release ${VERSION}" > release_notes.md
+          fi
+
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          body_path: release_notes.md
+          files: |
+            milosmiric-mongodb-datasource-*.zip
+            milosmiric-mongodb-datasource-*.sha256
