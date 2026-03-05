@@ -2,7 +2,7 @@
  * E2E tests focused on query execution — verifying actual data results.
  */
 import { test, expect } from '@playwright/test';
-import { openNewPanelEditor, selectOption } from './helpers';
+import { openNewPanelEditor, selectOption, selectVisualization } from './helpers';
 
 /**
  * Helper: Fill query editor fields and run a query in the panel editor.
@@ -23,17 +23,16 @@ async function fillAndRunQuery(
   await selectOption(page, 'Select database', opts.database);
   await selectOption(page, 'Select collection', opts.collection);
 
+  // Scope to query editor row to avoid matching panel option labels.
+  const queryRow = page.getByTestId('query-editor-row');
+
   // Set format if needed.
   if (opts.format === 'time_series') {
-    // Switch visualization type to Time series for chart rendering.
-    const vizBtn = page.getByTestId('data-testid select a panel type button');
-    if (await vizBtn.isVisible({ timeout: 3000 }).catch(() => false)) {
-      await vizBtn.click();
-      await page.getByText('Time series').first().click();
-    }
-    await page.locator('label[for*="option-time_series"]').click({ force: true });
+    // Switch visualization type to Time series.
+    await selectVisualization(page, 'Time series');
+    await queryRow.locator('label[for*="option-time_series"]').click({ force: true });
     if (opts.timeField) {
-      const timeInput = page.getByPlaceholder('timestamp');
+      const timeInput = queryRow.getByPlaceholder('timestamp');
       await timeInput.clear();
       await timeInput.fill(opts.timeField);
       await timeInput.blur();
@@ -50,7 +49,7 @@ async function fillAndRunQuery(
   await page.keyboard.type(opts.pipeline, { delay: 5 });
 
   // Click outside the editor to commit the pipeline value.
-  await page.locator('label', { hasText: 'Pipeline' }).click({ force: true });
+  await queryRow.locator('label', { hasText: 'Pipeline' }).click({ force: true });
 
   // Explicitly trigger query execution via the RefreshPicker run button.
   await page.getByTestId('data-testid RefreshPicker run button').click();

@@ -30,7 +30,9 @@ test.describe('Sample Dashboard', () => {
 
   test('Sensor Gauge panel renders', async ({ page }) => {
     const panel = await waitForPanelData(page, 'Sensor Gauge');
-    await expect(panel.locator('canvas').first()).toBeVisible({ timeout: 15000 });
+    // Gauge renders as canvas (<=12.x) or SVG (13+).
+    const gauge = panel.locator('canvas').first().or(panel.locator('svg').first());
+    await expect(gauge).toBeVisible({ timeout: 15000 });
   });
 
   test('Reading Count stat panel shows a number', async ({ page }) => {

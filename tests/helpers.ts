@@ -61,14 +61,41 @@ export async function openNewPanelEditor(page: Page): Promise<void> {
   await expect(modal).toBeVisible({ timeout: 10000 });
   await modal.getByText('MongoDB').first().click();
 
-  // Select "Table" visualization from the viz picker sidebar using data-testid.
-  const tableViz = page.getByTestId('data-testid Plugin visualization item Table');
-  if (await tableViz.isVisible({ timeout: 3000 }).catch(() => false)) {
-    await tableViz.click({ force: true });
-  }
-
   // Wait for the query editor to render (pipeline editor has our data-testid).
   await expect(page.getByTestId('mongodb-pipeline-editor')).toBeVisible({ timeout: 10000 });
+
+  // Select "Table" visualization. The viz picker sidebar may or may not be open.
+  await selectVisualization(page, 'Table');
+}
+
+/**
+ * Select a visualization type in the panel editor.
+ * Opens the viz picker if needed, then clicks the target visualization.
+ * Works across Grafana 12.3.x and 12.4+.
+ */
+export async function selectVisualization(page: Page, name: string): Promise<void> {
+  const vizItem =
+    page.getByTestId(`data-testid Plugin visualization item ${name}`)
+      .or(page.getByLabel(`Plugin visualization item ${name}`));
+
+  // If the viz picker sidebar is already open, just click.
+  if (await vizItem.isVisible({ timeout: 1000 }).catch(() => false)) {
+    await vizItem.click({ force: true });
+    return;
+  }
+
+  // Open the viz picker by clicking the visualization type dropdown.
+  // Try the toggle button first (12.4+), then the visualization type text (12.3.x).
+  const vizToggle = page.getByTestId('data-testid toggle-viz-picker');
+  if (await vizToggle.isVisible({ timeout: 1000 }).catch(() => false)) {
+    await vizToggle.click();
+  } else {
+    // In 12.3.x, click the viz type selector area in the options sidebar.
+    await page.locator('[id="data-testid select a panel type button"]').click();
+  }
+
+  await expect(vizItem).toBeVisible({ timeout: 5000 });
+  await vizItem.click({ force: true });
 }
 
 /**
@@ -94,8 +121,9 @@ export async function selectOption(page: Page, placeholder: string, value: strin
  * The Monaco editor's default value isn't committed until onBlur fires.
  */
 export async function commitPipelineAndRefresh(page: Page): Promise<void> {
+  const queryRow = page.getByTestId('query-editor-row');
   const pipelineEditor = page.getByTestId('mongodb-pipeline-editor');
   await pipelineEditor.locator('.monaco-editor').first().click({ force: true });
-  await page.locator('label', { hasText: 'Pipeline' }).click({ force: true });
+  await queryRow.locator('label', { hasText: 'Pipeline' }).click({ force: true });
   await page.getByTestId('data-testid RefreshPicker run button').click();
 }

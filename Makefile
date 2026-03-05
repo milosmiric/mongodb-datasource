@@ -74,6 +74,34 @@ e2e-ui: ## Run Playwright E2E tests with interactive UI
 e2e-install: ## Install Playwright browsers
 	npm run e2e:install
 
+# E2E against specific Grafana versions
+GRAFANA_E2E_IMAGE   ?= grafana-enterprise
+GRAFANA_E2E_VERSION ?= 12.4.0
+
+.PHONY: e2e-version
+e2e-version: ## Run E2E against a specific Grafana version (GRAFANA_E2E_VERSION=12.3.4)
+	@echo "Starting Grafana $(GRAFANA_E2E_IMAGE):$(GRAFANA_E2E_VERSION)..."
+	GRAFANA_VERSION=$(GRAFANA_E2E_VERSION) GRAFANA_IMAGE=$(GRAFANA_E2E_IMAGE) docker compose up -d --build grafana
+	@echo "Waiting for Grafana..."
+	@until curl -sf http://localhost:$(GRAFANA_PORT)/api/health > /dev/null 2>&1; do sleep 1; done
+	@echo "Running E2E tests..."
+	npm run e2e
+	@echo ""
+	@echo "E2E passed on Grafana $(GRAFANA_E2E_IMAGE):$(GRAFANA_E2E_VERSION)"
+
+.PHONY: e2e-compat
+e2e-compat: ## Run E2E against all supported Grafana versions (12.3.x, 12.4.x, 13.x)
+	@echo "=== Grafana Enterprise 12.3.4 ==="
+	$(MAKE) e2e-version GRAFANA_E2E_VERSION=12.3.4 GRAFANA_E2E_IMAGE=grafana-enterprise
+	@echo ""
+	@echo "=== Grafana Enterprise 12.4.0 ==="
+	$(MAKE) e2e-version GRAFANA_E2E_VERSION=12.4.0 GRAFANA_E2E_IMAGE=grafana-enterprise
+	@echo ""
+	@echo "=== Grafana Dev 13.0.0 ==="
+	$(MAKE) e2e-version GRAFANA_E2E_VERSION=13.0.0-22736437755 GRAFANA_E2E_IMAGE=grafana-dev
+	@echo ""
+	@echo "All E2E compatibility tests passed!"
+
 # ─── Lint & Check ──────────────────────────────────────────────────
 
 .PHONY: lint

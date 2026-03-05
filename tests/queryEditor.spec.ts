@@ -29,12 +29,15 @@ test.describe('Query Editor', () => {
   test('switching to time_series format shows Time Field', async ({ page }) => {
     await openNewPanelEditor(page);
 
-    // Click the "Time Series" radio label.
-    await page.locator('label[for*="option-time_series"]').click({ force: true });
+    // Scope to query editor row to avoid matching panel option labels.
+    const queryRow = page.getByTestId('query-editor-row');
 
-    // Time Field and Legend inputs should now appear.
-    await expect(page.locator('label', { hasText: 'Time Field' })).toBeVisible({ timeout: 5000 });
-    await expect(page.locator('label', { hasText: 'Legend' })).toBeVisible();
+    // Click the "Time Series" radio label.
+    await queryRow.locator('label[for*="option-time_series"]').click({ force: true });
+
+    // Time Field and Legend inputs should now appear within the query editor.
+    await expect(queryRow.locator('label', { hasText: 'Time Field' })).toBeVisible({ timeout: 5000 });
+    await expect(queryRow.locator('label', { hasText: 'Legend' })).toBeVisible();
   });
 
   test('database dropdown loads real databases', async ({ page }) => {
@@ -56,11 +59,11 @@ test.describe('Query Editor', () => {
     // Now click the collection dropdown.
     await clickSelect(page, 'Select collection');
 
-    // Collections from the demo database should appear.
-    await expect(page.getByText('sensors')).toBeVisible({ timeout: 10000 });
-    await expect(page.getByText('users')).toBeVisible();
-    await expect(page.getByText('events')).toBeVisible();
-    await expect(page.getByText('orders')).toBeVisible();
+    // Collections from the demo database should appear in dropdown options.
+    await expect(page.getByRole('option', { name: 'sensors' })).toBeVisible({ timeout: 10000 });
+    await expect(page.getByRole('option', { name: 'users' })).toBeVisible();
+    await expect(page.getByRole('option', { name: 'events' })).toBeVisible();
+    await expect(page.getByRole('option', { name: 'orders' })).toBeVisible();
   });
 
   test('running a query returns data in the panel', async ({ page }) => {
