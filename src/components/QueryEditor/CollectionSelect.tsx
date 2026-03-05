@@ -3,6 +3,7 @@
  *
  * Fetches the list of collections for the selected database from the backend.
  */
+import React from 'react';
 import { Combobox, ComboboxOption, InlineField, Alert } from '@grafana/ui';
 
 import { DataSource } from '../../datasource';

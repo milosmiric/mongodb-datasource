@@ -5,7 +5,7 @@
   "id": "milosmiric-mongodb-datasource",
   "metrics": true,
   "backend": true,
-  "executable": "gpx_mongodb-datasource",
+  "executable": "gpx_mongodb_datasource",
   "alerting": true,
   "info": {
     "description": "Connect Grafana to MongoDB. Query collections using aggregation pipelines with built-in time-range macros, smart filtering, and full BSON type support.",
@@ -65,7 +65,7 @@
     "updated": "2026-03-05"
   },
   "dependencies": {
-    "grafanaDependency": ">=11.0.0",
+    "grafanaDependency": ">=12.3.0",
     "plugins": []
   }
 }

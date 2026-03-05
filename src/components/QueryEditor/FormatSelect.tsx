@@ -1,6 +1,7 @@
 /**
  * FormatSelect component for toggling between table and time-series output.
  */
+import React from 'react';
 import { SelectableValue } from '@grafana/data';
 import { InlineField, RadioButtonGroup } from '@grafana/ui';
 

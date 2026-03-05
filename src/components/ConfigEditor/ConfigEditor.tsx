@@ -4,7 +4,7 @@
  * Renders the datasource configuration form with connection URI,
  * authentication, and TLS settings.
  */
-import { ChangeEvent } from 'react';
+import React, { ChangeEvent } from 'react';
 import { DataSourcePluginOptionsEditorProps } from '@grafana/data';
 import { InlineField, Input, SecretInput, InlineSwitch, Combobox, ComboboxOption, TextArea, FieldSet, Button } from '@grafana/ui';
 

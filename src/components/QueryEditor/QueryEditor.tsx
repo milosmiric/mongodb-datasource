@@ -4,7 +4,7 @@
  * Provides the main query editing interface with database/collection selection,
  * aggregation pipeline editor, time field selector, and output format toggle.
  */
-import { ChangeEvent } from 'react';
+import React, { ChangeEvent } from 'react';
 import { QueryEditorProps } from '@grafana/data';
 import { InlineField, Input } from '@grafana/ui';
 

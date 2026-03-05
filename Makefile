@@ -4,7 +4,7 @@
 # Run `make help` to see all available targets.
 
 PLUGIN_ID    := milosmiric-mongodb-datasource
-GO_BINARY    := gpx_mongodb-datasource
+GO_BINARY    := gpx_mongodb_datasource
 GOOS         ?= $(shell go env GOOS)
 GOARCH       ?= $(shell go env GOARCH)
 DIST         := dist
@@ -21,7 +21,7 @@ build: build-frontend build-backend ## Build both frontend and backend
 
 .PHONY: build-frontend
 build-frontend: ## Build the React frontend (production)
-	bun run build
+	npm run build
 
 .PHONY: build-backend
 build-backend: ## Build the Go backend for the current platform
@@ -41,7 +41,7 @@ build-backend-all: ## Cross-compile the Go backend for all platforms
 
 .PHONY: dev
 dev: ## Start frontend in watch mode (auto-rebuild on changes)
-	bun run dev
+	npm run dev
 
 # ─── Test ───────────────────────────────────────────────────────────
 
@@ -60,23 +60,23 @@ test-backend-cover: ## Run Go tests with coverage report
 
 .PHONY: test-frontend
 test-frontend: ## Run Jest frontend unit tests
-	bun run test -- --ci
+	npm run test -- --ci
 
 .PHONY: test-frontend-cover
 test-frontend-cover: ## Run Jest tests with coverage
-	bun run test -- --ci --coverage
+	npm run test -- --ci --coverage
 
 .PHONY: e2e
 e2e: ## Run Playwright E2E tests (requires Docker running)
-	bun run e2e
+	npm run e2e
 
 .PHONY: e2e-ui
 e2e-ui: ## Run Playwright E2E tests with interactive UI
-	bun run e2e:ui
+	npm run e2e:ui
 
 .PHONY: e2e-install
 e2e-install: ## Install Playwright browsers
-	bun run e2e:install
+	npm run e2e:install
 
 # ─── Lint & Check ──────────────────────────────────────────────────
 
@@ -85,11 +85,11 @@ lint: lint-frontend lint-backend ## Run all linters
 
 .PHONY: lint-frontend
 lint-frontend: ## Run ESLint on frontend code
-	bun run lint
+	npm run lint
 
 .PHONY: lint-fix
 lint-fix: ## Run ESLint with auto-fix
-	bun run lint:fix
+	npm run lint:fix
 
 .PHONY: lint-backend
 lint-backend: ## Run golangci-lint on Go code
@@ -97,7 +97,7 @@ lint-backend: ## Run golangci-lint on Go code
 
 .PHONY: typecheck
 typecheck: ## Run TypeScript type checking
-	bun run typecheck
+	npm run typecheck
 
 .PHONY: check
 check: lint typecheck test ## Run all linters, type checks, and tests
@@ -208,7 +208,7 @@ rebuild: build restart-grafana ## Rebuild everything and restart Grafana
 	@echo "Plugin rebuilt. Grafana restarting at http://localhost:$(GRAFANA_PORT)"
 
 .PHONY: health
-PRETTY_JSON := bun -e 'Bun.stdin.text().then(t=>console.log(JSON.stringify(JSON.parse(t),null,2)))'
+PRETTY_JSON := node -e 'let d=""; process.stdin.on("data",c=>d+=c); process.stdin.on("end",()=>console.log(JSON.stringify(JSON.parse(d),null,2)))'
 
 health: ## Check Grafana and datasource health
 	@echo "Grafana health:"

@@ -1,3 +1,4 @@
+import React from 'react';
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { ConfigEditor } from './ConfigEditor';
@@ -112,7 +113,7 @@ describe('ConfigEditor', () => {
       ...defaultProps,
       options: {
         ...defaultProps.options,
-        jsonData: { authMechanism: '' },
+        jsonData: { authMechanism: '' as const },
       },
     };
 

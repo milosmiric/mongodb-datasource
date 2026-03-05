@@ -1,6 +1,16 @@
-/**
- * Jest configuration extending the base config.
- */
+// force timezone to UTC to allow tests to work regardless of local timezone
+// generally used by snapshots, but can affect specific tests
+process.env.TZ = 'UTC';
+
+const baseConfig = require('./.config/jest.config');
+
 module.exports = {
-  ...require('./.config/jest.config'),
+  // Jest configuration provided by Grafana scaffolding
+  ...baseConfig,
+  modulePathIgnorePatterns: ['<rootDir>/bun-code/'],
+  moduleNameMapper: {
+    ...baseConfig.moduleNameMapper,
+    '\\.(svg|png|jpg|jpeg|gif)$': '<rootDir>/src/testdata/fileMock.js',
+    '^monaco-editor$': '<rootDir>/src/testdata/monacoMock.js',
+  },
 };

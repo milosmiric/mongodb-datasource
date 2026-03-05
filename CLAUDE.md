@@ -24,7 +24,7 @@ Open-source Grafana datasource plugin for MongoDB. Plugin ID: `milosmiric-mongod
 
 ## Package Manager
 
-**Bun only.** No npm, yarn, or pnpm. All commands use `bun` or `bunx`. Never use `python3` or `node` — use `bun` for any scripting needs.
+**npm only.** No bun, yarn, or pnpm. All commands use `npm` or `npx`.
 
 ## Ports
 
@@ -39,9 +39,9 @@ Open-source Grafana datasource plugin for MongoDB. Plugin ID: `milosmiric-mongod
 ```bash
 # Build
 make build              # Build frontend + backend
-make build-frontend     # Frontend only (bun run build)
+make build-frontend     # Frontend only (npm run build)
 make build-backend      # Go backend for current platform
-make dev                # Frontend watch mode (bun run dev)
+make dev                # Frontend watch mode (npm run dev)
 
 # Test
 make test               # All tests (Go + Jest)
@@ -94,8 +94,8 @@ make fresh              # Full clean rebuild from scratch
 ## Dependencies
 
 - Go: `grafana-plugin-sdk-go` v0.290.0, `mongo-driver/v2` v2.5.0
-- Frontend: `@grafana/data`, `@grafana/runtime`, `@grafana/ui` v11.4.x
-- Target: Grafana >= 11.0
+- Frontend: `@grafana/data`, `@grafana/runtime`, `@grafana/ui` v12.4.x
+- Target: Grafana >= 12.3
 
 ## Testing
 

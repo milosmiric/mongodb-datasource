@@ -3,7 +3,7 @@
  *
  * Uses Grafana's CodeEditor with JSON language mode for syntax highlighting.
  */
-import { useCallback, useRef } from 'react';
+import React, { useCallback, useRef } from 'react';
 import { InlineField, CodeEditor, Button, type monacoTypes } from '@grafana/ui';
 
 /** Props for the PipelineEditor component. */
