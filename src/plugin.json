@@ -47,7 +47,20 @@
         "url": "https://github.com/milosmiric/mongodb-datasource/blob/main/LICENSE"
       }
     ],
-    "screenshots": [],
+    "screenshots": [
+      {
+        "name": "Dashboard — Sensors & Aggregations",
+        "path": "img/dashboard-1.png"
+      },
+      {
+        "name": "Dashboard — Orders & BSON Types",
+        "path": "img/dashboard-2.png"
+      },
+      {
+        "name": "Configuration",
+        "path": "img/add-connection.png"
+      }
+    ],
     "version": "0.2.0",
     "updated": "2026-03-05"
   },

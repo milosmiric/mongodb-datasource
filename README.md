@@ -1,9 +1,18 @@
-# MongoDB Datasource Plugin for Grafana
+<p align="center">
+  <img src="src/img/logo.svg" width="80" height="80" alt="MongoDB Datasource Plugin">
+</p>
 
-[![License](https://img.shields.io/github/license/milosmiric/mongodb-datasource)](LICENSE)
-[![CI](https://img.shields.io/github/actions/workflow/status/milosmiric/mongodb-datasource/ci.yml?branch=main&label=CI)](https://github.com/milosmiric/mongodb-datasource/actions)
+<h1 align="center">MongoDB Datasource Plugin for Grafana</h1>
 
-A production-quality, open-source MongoDB datasource plugin for Grafana. Query MongoDB collections using aggregation pipelines with built-in macros, smart filtering, and full BSON type support.
+<p align="center">
+  <a href="LICENSE"><img src="https://img.shields.io/github/license/milosmiric/mongodb-datasource" alt="License"></a>
+  <a href="https://github.com/milosmiric/mongodb-datasource/actions"><img src="https://img.shields.io/github/actions/workflow/status/milosmiric/mongodb-datasource/ci.yml?branch=main&label=CI" alt="CI"></a>
+</p>
+
+<p align="center">
+  A production-quality, open-source MongoDB datasource plugin for Grafana.<br>
+  Query MongoDB collections using aggregation pipelines with built-in macros, smart filtering, and full BSON type support.
+</p>
 
 ## Why This Plugin?
 
@@ -20,10 +29,14 @@ The official Grafana MongoDB plugin is **Enterprise-only**. The best community a
 
 ## Screenshots
 
-<!-- TODO: Add screenshots -->
-<!-- ![Config Editor](docs/screenshots/config-editor.png) -->
-<!-- ![Query Editor](docs/screenshots/query-editor.png) -->
-<!-- ![Sample Dashboard](docs/screenshots/sample-dashboard.png) -->
+### Sample Dashboard — Time Series, Gauges & Aggregations
+![Dashboard - Sensors & Aggregations](src/img/dashboard-1.png)
+
+### Sample Dashboard — Orders Analytics & BSON Types
+![Dashboard - Orders & BSON Types](src/img/dashboard-2.png)
+
+### Configuration
+![Config Editor](src/img/add-connection.png)
 
 ## Quick Start
 
@@ -173,4 +186,4 @@ See [CONTRIBUTING.md](CONTRIBUTING.md) for branch naming, PR process, code style
 
 ## License
 
-Apache License 2.0. See [LICENSE](LICENSE).
+GNU Affero General Public License v3.0. See [LICENSE](LICENSE).
