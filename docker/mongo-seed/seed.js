@@ -281,7 +281,7 @@ print(`  Inserted ${orders.length} orders (${ORDER_DAYS} days)`);
 const adminDb = db.getSiblingDB('admin');
 
 // SCRAM-SHA-256 user
-try { adminDb.dropUser('scramUser256'); } catch (e) { /* ignore if not exists */ }
+try { adminDb.dropUser('scramUser256'); } catch (_e) { /* ignore if not exists */ }
 adminDb.createUser({
   user: 'scramUser256',
   pwd: 'testpass256',
@@ -294,7 +294,7 @@ adminDb.createUser({
 print('  Created SCRAM-SHA-256 user: scramUser256');
 
 // SCRAM-SHA-1 user
-try { adminDb.dropUser('scramUser1'); } catch (e) { /* ignore if not exists */ }
+try { adminDb.dropUser('scramUser1'); } catch (_e) { /* ignore if not exists */ }
 adminDb.createUser({
   user: 'scramUser1',
   pwd: 'testpass1',
@@ -309,7 +309,7 @@ print('  Created SCRAM-SHA-1 user: scramUser1');
 // X.509 user — subject in RFC 2253 format (reversed from OpenSSL's default order).
 const externalDb = db.getSiblingDB('$external');
 const x509User = 'O=TestOrg,CN=mongodb-client';
-try { externalDb.dropUser(x509User); } catch (e) { /* ignore if not exists */ }
+try { externalDb.dropUser(x509User); } catch (_e) { /* ignore if not exists */ }
 externalDb.createUser({
   user: x509User,
   roles: [
