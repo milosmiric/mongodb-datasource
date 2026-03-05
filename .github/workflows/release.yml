@@ -19,6 +19,12 @@ jobs:
         with:
           persist-credentials: false
 
+      - name: Setup Node.js environment
+        uses: actions/setup-node@v6
+        with:
+          node-version: '22'
+          cache: 'npm'
+
       - name: Setup Go environment
         uses: actions/setup-go@v6
         with:
