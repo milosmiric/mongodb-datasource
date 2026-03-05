@@ -1,6 +1,9 @@
 # MongoDB Datasource Plugin for Grafana
 
-A production-quality, open-source MongoDB datasource plugin for Grafana. Query MongoDB collections using aggregation pipelines with full time-series and table support.
+[![License](https://img.shields.io/github/license/milosmiric/mongodb-datasource)](LICENSE)
+[![CI](https://img.shields.io/github/actions/workflow/status/milosmiric/mongodb-datasource/ci.yml?branch=main&label=CI)](https://github.com/milosmiric/mongodb-datasource/actions)
+
+A production-quality, open-source MongoDB datasource plugin for Grafana. Query MongoDB collections using aggregation pipelines with built-in macros, smart filtering, and full BSON type support.
 
 ## Why This Plugin?
 
@@ -159,6 +162,14 @@ Future milestones:
 ## Contributing
 
 See [CONTRIBUTING.md](CONTRIBUTING.md) for branch naming, PR process, code style, and test requirements.
+
+## Author
+
+**Miloš Mirić** — Senior Solutions Architect at MongoDB
+
+- Website: [miric.dev](https://miric.dev)
+- LinkedIn: [milosmiric](https://www.linkedin.com/in/milosmiric/)
+- GitHub: [milosmiric](https://github.com/milosmiric)
 
 ## License
 

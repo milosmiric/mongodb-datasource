@@ -1,7 +1,15 @@
 {
   "name": "milosmiric-mongodb-datasource",
-  "version": "0.1.0",
-  "description": "MongoDB datasource plugin for Grafana",
+  "version": "0.2.0",
+  "description": "MongoDB datasource plugin for Grafana. Query collections using aggregation pipelines with built-in macros, smart filtering, and full BSON type support.",
+  "homepage": "https://github.com/milosmiric/mongodb-datasource",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/milosmiric/mongodb-datasource.git"
+  },
+  "bugs": {
+    "url": "https://github.com/milosmiric/mongodb-datasource/issues"
+  },
   "scripts": {
     "build": "webpack -c ./.config/webpack/webpack.config.ts --env production",
     "dev": "webpack -w -c ./.config/webpack/webpack.config.ts --env development",
@@ -24,10 +32,13 @@
     "db:seed": "docker compose run --rm mongo-seed",
     "db:reset": "docker compose exec mongodb mongosh --quiet --eval 'db.getSiblingDB(\"demo\").dropDatabase()' && docker compose run --rm mongo-seed",
     "db:shell": "docker compose exec mongodb mongosh",
-    "health": "curl -sf -u admin:admin http://localhost:3105/api/datasources/uid/mongodb-demo/health | python3 -m json.tool",
+    "health": "curl -sf -u admin:admin http://localhost:3105/api/datasources/uid/mongodb-demo/health | bun -e 'Bun.stdin.text().then(t=>console.log(JSON.stringify(JSON.parse(t),null,2)))'",
     "sign": "npx --yes @grafana/sign-plugin@latest"
   },
-  "author": "Miloš Mirić",
+  "author": {
+    "name": "Miloš Mirić",
+    "url": "https://miric.dev"
+  },
   "license": "Apache-2.0",
   "devDependencies": {
     "@grafana/e2e-selectors": "^11.4.0",

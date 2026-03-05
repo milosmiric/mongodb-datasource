@@ -8,17 +8,22 @@
   "executable": "gpx_mongodb-datasource",
   "alerting": true,
   "info": {
-    "description": "MongoDB datasource plugin for Grafana. Query MongoDB collections using aggregation pipelines.",
+    "description": "Connect Grafana to MongoDB. Query collections using aggregation pipelines with built-in time-range macros, smart filtering, and full BSON type support.",
     "author": {
       "name": "Miloš Mirić",
-      "url": "https://github.com/milosmiric"
+      "url": "https://miric.dev"
     },
     "keywords": [
       "mongodb",
       "nosql",
       "datasource",
       "database",
-      "aggregation"
+      "aggregation",
+      "pipeline",
+      "time-series",
+      "atlas",
+      "document",
+      "bson"
     ],
     "logos": {
       "small": "img/logo.svg",
@@ -26,8 +31,16 @@
     },
     "links": [
       {
+        "name": "Website",
+        "url": "https://miric.dev"
+      },
+      {
         "name": "GitHub",
         "url": "https://github.com/milosmiric/mongodb-datasource"
+      },
+      {
+        "name": "Documentation",
+        "url": "https://github.com/milosmiric/mongodb-datasource/blob/main/docs/queries.md"
       },
       {
         "name": "License",
@@ -35,8 +48,8 @@
       }
     ],
     "screenshots": [],
-    "version": "0.1.0",
-    "updated": "2026-03-04"
+    "version": "0.2.0",
+    "updated": "2026-03-05"
   },
   "dependencies": {
     "grafanaDependency": ">=11.0.0",
