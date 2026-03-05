@@ -160,13 +160,13 @@ func TestComputeIntervalUnit(t *testing.T) {
 	}
 }
 
-func TestGenerateObjectIdHex(t *testing.T) {
+func TestGenerateObjectIDHex(t *testing.T) {
 	ts := time.Date(2024, 1, 1, 0, 0, 0, 0, time.UTC)
 	// 2024-01-01T00:00:00Z → Unix timestamp 1704067200 → hex 65920080
-	fromOid := generateObjectIdHex(ts, "00")
+	fromOid := generateObjectIDHex(ts, "00")
 	assert.Equal(t, `{"$oid":"659200800000000000000000"}`, fromOid)
 
-	toOid := generateObjectIdHex(ts, "ff")
+	toOid := generateObjectIDHex(ts, "ff")
 	assert.Equal(t, `{"$oid":"65920080ffffffffffffffff"}`, toOid)
 }
 

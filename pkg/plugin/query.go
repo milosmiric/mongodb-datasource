@@ -56,7 +56,7 @@ func (d *Datasource) query(ctx context.Context, pCtx backend.PluginContext, quer
 	// Set frame metadata based on query format.
 	if model.Format == QueryFormatTimeSeries {
 		frame.Meta = &data.FrameMeta{
-			Type: data.FrameTypeTimeSeriesMany,
+			Type: data.FrameTypeTimeSeriesMulti,
 		}
 	}
 
@@ -127,9 +127,9 @@ func computeIntervalUnit(intervalMs int64) (unit string, binSize int64) {
 	}
 }
 
-// generateObjectIdHex creates an ObjectId hex string from a timestamp.
-// padding is "00" for lower bound ($__from_oid) or "ff" for upper bound ($__to_oid).
-func generateObjectIdHex(t time.Time, padding string) string {
+// GenerateObjectIDHex creates an ObjectId hex string from a timestamp.
+// Padding is "00" for lower bound ($__from_oid) or "ff" for upper bound ($__to_oid).
+func generateObjectIDHex(t time.Time, padding string) string {
 	return fmt.Sprintf(`{"$oid":"%08x%s"}`, t.Unix(), strings.Repeat(padding, 8))
 }
 
@@ -144,8 +144,8 @@ func interpolateVariables(pipeline string, query backend.DataQuery) string {
 	toMs := fmt.Sprintf("%d", timeRange.To.UnixMilli())
 	fromS := fmt.Sprintf("%d", timeRange.From.Unix())
 	toS := fmt.Sprintf("%d", timeRange.To.Unix())
-	fromOid := generateObjectIdHex(timeRange.From, "00")
-	toOid := generateObjectIdHex(timeRange.To, "ff")
+	fromOid := generateObjectIDHex(timeRange.From, "00")
+	toOid := generateObjectIDHex(timeRange.To, "ff")
 
 	// Calculate duration and interval.
 	duration := timeRange.To.Sub(timeRange.From)
@@ -261,8 +261,8 @@ func expandMacros(pipeline string, timeRange backend.TimeRange) (string, error) 
 			return fmt.Sprintf(`"%s": {"$gte": %d, "$lte": %d}`, fieldName, fromMs, toMs)
 
 		case "oidFilter":
-			fromOid := generateObjectIdHex(timeRange.From, "00")
-			toOid := generateObjectIdHex(timeRange.To, "ff")
+			fromOid := generateObjectIDHex(timeRange.From, "00")
+			toOid := generateObjectIDHex(timeRange.To, "ff")
 			return fmt.Sprintf(`"%s": {"$gte": %s, "$lte": %s}`, fieldName, fromOid, toOid)
 
 		case "timeGroup":
