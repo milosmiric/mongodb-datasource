@@ -6,21 +6,67 @@ on:
       - 'v*'
 
 permissions:
-  id-token: write
   contents: write
-  attestations: write
 
 jobs:
   release:
-    name: Build, Sign & Release
+    name: Build & Release
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
 
-      - name: Generate package-lock.json for Grafana build action
-        run: npm install --package-lock-only --ignore-scripts
-
-      - uses: grafana/plugin-actions/build-plugin@build-plugin/v1.2.0
+      - uses: actions/setup-go@v5
         with:
-          policy_token: ${{ secrets.GRAFANA_ACCESS_POLICY_TOKEN }}
-          attestation: true
+          go-version-file: go.mod
+
+      - uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: latest
+
+      - name: Install frontend dependencies
+        run: bun install --frozen-lockfile
+
+      - name: Build frontend
+        run: bun run build
+
+      - name: Build backend binaries
+        run: |
+          declare -A targets=(
+            ["linux_amd64"]="linux amd64"
+            ["linux_arm64"]="linux arm64"
+            ["darwin_amd64"]="darwin amd64"
+            ["darwin_arm64"]="darwin arm64"
+            ["windows_amd64"]="windows amd64"
+          )
+          for key in "${!targets[@]}"; do
+            read -r goos goarch <<< "${targets[$key]}"
+            binary="gpx_mongodb-datasource_${goos}_${goarch}"
+            if [ "$goos" = "windows" ]; then
+              binary="${binary}.exe"
+            fi
+            echo "Building ${binary}..."
+            GOOS=$goos GOARCH=$goarch go build -o "dist/${binary}" ./pkg
+          done
+
+      - name: Set executable permissions
+        run: chmod 0755 dist/gpx_mongodb-datasource_*
+
+      - name: Package plugin
+        run: |
+          version="${GITHUB_REF_NAME#v}"
+          plugin_id="milosmiric-mongodb-datasource"
+          mv dist "${plugin_id}"
+          zip -r "${plugin_id}-${version}.zip" "${plugin_id}" -x '*.map'
+          sha1sum "${plugin_id}-${version}.zip" > "${plugin_id}-${version}.zip.sha1"
+          md5sum "${plugin_id}-${version}.zip" > "${plugin_id}-${version}.zip.md5"
+          echo "PLUGIN_ZIP=${plugin_id}-${version}.zip" >> "$GITHUB_ENV"
+
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          generate_release_notes: true
+          files: |
+            ${{ env.PLUGIN_ZIP }}
+            ${{ env.PLUGIN_ZIP }}.sha1
+            ${{ env.PLUGIN_ZIP }}.md5
+          fail_on_unmatched_files: true
