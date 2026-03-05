@@ -7,7 +7,6 @@ const baseConfig = require('./.config/jest.config');
 module.exports = {
   // Jest configuration provided by Grafana scaffolding
   ...baseConfig,
-  modulePathIgnorePatterns: ['<rootDir>/bun-code/'],
   moduleNameMapper: {
     ...baseConfig.moduleNameMapper,
     '\\.(svg|png|jpg|jpeg|gif)$': '<rootDir>/src/testdata/fileMock.js',
