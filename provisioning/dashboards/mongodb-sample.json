@@ -16,16 +16,17 @@
         "query": "temperature,humidity,pressure,wind_speed",
         "current": {
           "selected": true,
-          "text": "temperature",
-          "value": "temperature"
+          "text": "All",
+          "value": "$__all"
         },
         "options": [
-          { "selected": true, "text": "temperature", "value": "temperature" },
+          { "selected": false, "text": "temperature", "value": "temperature" },
           { "selected": false, "text": "humidity", "value": "humidity" },
           { "selected": false, "text": "pressure", "value": "pressure" },
           { "selected": false, "text": "wind_speed", "value": "wind_speed" }
         ],
         "includeAll": true,
+        "allValue": ".*",
         "multi": false
       },
       {
@@ -44,6 +45,7 @@
           { "selected": false, "text": "outdoor", "value": "outdoor" }
         ],
         "includeAll": true,
+        "allValue": ".*",
         "multi": false
       },
       {
@@ -63,6 +65,7 @@
           { "selected": false, "text": "books", "value": "books" }
         ],
         "includeAll": true,
+        "allValue": ".*",
         "multi": false
       }
     ]
@@ -88,7 +91,7 @@
           "refId": "A",
           "database": "demo",
           "collection": "sensors",
-          "pipeline": "[{\"$match\": {\"sensor\": \"${sensor_type}\", \"$expr\": {\"$and\": [{\"$gte\": [\"$timestamp\", {\"$toDate\": $__from}]}, {\"$lte\": [\"$timestamp\", {\"$toDate\": $__to}]}]}}}, {\"$sort\": {\"timestamp\": 1}}, {\"$project\": {\"_id\": 0, \"timestamp\": 1, \"value\": 1, \"location\": 1}}]",
+          "pipeline": "[{\"$match\": {\"sensor\": {\"$regex\": \"^${sensor_type}$\"}, \"location\": {\"$regex\": \"^${loc}$\"}, \"$expr\": {\"$and\": [{\"$gte\": [\"$timestamp\", {\"$toDate\": $__from}]}, {\"$lte\": [\"$timestamp\", {\"$toDate\": $__to}]}]}}}, {\"$sort\": {\"timestamp\": 1}}, {\"$project\": {\"_id\": 0, \"timestamp\": 1, \"value\": 1, \"location\": 1}}]",
           "timeField": "timestamp",
           "format": "time_series",
           "legendFormat": "{{location}}"
@@ -125,7 +128,7 @@
           "refId": "A",
           "database": "demo",
           "collection": "sensors",
-          "pipeline": "[{\"$match\": {\"sensor\": \"${sensor_type}\"}}, {\"$sort\": {\"timestamp\": -1}}, {\"$limit\": 1}, {\"$project\": {\"_id\": 0, \"value\": 1}}]",
+          "pipeline": "[{\"$match\": {\"sensor\": {\"$regex\": \"^${sensor_type}$\"}, \"location\": {\"$regex\": \"^${loc}$\"}}}, {\"$sort\": {\"timestamp\": -1}}, {\"$limit\": 1}, {\"$project\": {\"_id\": 0, \"value\": 1}}]",
           "timeField": "",
           "format": "table",
           "legendFormat": ""
@@ -171,7 +174,7 @@
           "refId": "A",
           "database": "demo",
           "collection": "sensors",
-          "pipeline": "[{\"$match\": {\"$expr\": {\"$and\": [{\"$gte\": [\"$timestamp\", {\"$toDate\": $__from}]}, {\"$lte\": [\"$timestamp\", {\"$toDate\": $__to}]}]}}}, {\"$count\": \"total\"}]",
+          "pipeline": "[{\"$match\": {\"sensor\": {\"$regex\": \"^${sensor_type}$\"}, \"location\": {\"$regex\": \"^${loc}$\"}, \"$expr\": {\"$and\": [{\"$gte\": [\"$timestamp\", {\"$toDate\": $__from}]}, {\"$lte\": [\"$timestamp\", {\"$toDate\": $__to}]}]}}}, {\"$count\": \"total\"}]",
           "timeField": "",
           "format": "table",
           "legendFormat": ""
@@ -304,7 +307,7 @@
           "refId": "A",
           "database": "demo",
           "collection": "sensors",
-          "pipeline": "[{\"$match\": {\"$expr\": {\"$and\": [{\"$gte\": [\"$timestamp\", {\"$toDate\": $__from}]}, {\"$lte\": [\"$timestamp\", {\"$toDate\": $__to}]}]}}}, {\"$group\": {\"_id\": \"$sensor\", \"avg_value\": {\"$avg\": \"$value\"}}}, {\"$project\": {\"_id\": 0, \"sensor\": \"$_id\", \"avg_value\": {\"$round\": [\"$avg_value\", 2]}}}, {\"$sort\": {\"sensor\": 1}}]",
+          "pipeline": "[{\"$match\": {\"sensor\": {\"$regex\": \"^${sensor_type}$\"}, \"location\": {\"$regex\": \"^${loc}$\"}, \"$expr\": {\"$and\": [{\"$gte\": [\"$timestamp\", {\"$toDate\": $__from}]}, {\"$lte\": [\"$timestamp\", {\"$toDate\": $__to}]}]}}}, {\"$group\": {\"_id\": \"$sensor\", \"avg_value\": {\"$avg\": \"$value\"}}}, {\"$project\": {\"_id\": 0, \"sensor\": \"$_id\", \"avg_value\": {\"$round\": [\"$avg_value\", 2]}}}, {\"$sort\": {\"sensor\": 1}}]",
           "timeField": "",
           "format": "table",
           "legendFormat": ""
@@ -337,7 +340,7 @@
           "refId": "A",
           "database": "demo",
           "collection": "sensors",
-          "pipeline": "[{\"$match\": {\"$expr\": {\"$and\": [{\"$gte\": [\"$timestamp\", {\"$toDate\": $__from}]}, {\"$lte\": [\"$timestamp\", {\"$toDate\": $__to}]}]}}}, {\"$group\": {\"_id\": \"$location\", \"count\": {\"$sum\": 1}}}, {\"$project\": {\"_id\": 0, \"location\": \"$_id\", \"count\": 1}}, {\"$sort\": {\"location\": 1}}]",
+          "pipeline": "[{\"$match\": {\"sensor\": {\"$regex\": \"^${sensor_type}$\"}, \"location\": {\"$regex\": \"^${loc}$\"}, \"$expr\": {\"$and\": [{\"$gte\": [\"$timestamp\", {\"$toDate\": $__from}]}, {\"$lte\": [\"$timestamp\", {\"$toDate\": $__to}]}]}}}, {\"$group\": {\"_id\": \"$location\", \"count\": {\"$sum\": 1}}}, {\"$project\": {\"_id\": 0, \"location\": \"$_id\", \"count\": 1}}, {\"$sort\": {\"location\": 1}}]",
           "timeField": "",
           "format": "table",
           "legendFormat": ""
@@ -507,7 +510,7 @@
           "refId": "A",
           "database": "demo",
           "collection": "orders",
-          "pipeline": "[{\"$match\": {\"status\": \"completed\", \"$expr\": {\"$and\": [{\"$gte\": [\"$timestamp\", {\"$toDate\": $__from}]}, {\"$lte\": [\"$timestamp\", {\"$toDate\": $__to}]}]}}}, {\"$group\": {\"_id\": {\"$dateTrunc\": {\"date\": \"$timestamp\", \"unit\": \"hour\"}}, \"revenue\": {\"$sum\": \"$amount\"}, \"orders\": {\"$sum\": 1}}}, {\"$project\": {\"_id\": 0, \"timestamp\": \"$_id\", \"revenue\": {\"$round\": [\"$revenue\", 2]}, \"orders\": 1}}, {\"$sort\": {\"timestamp\": 1}}]",
+          "pipeline": "[{\"$match\": {\"status\": \"completed\", \"category\": {\"$regex\": \"^${cat}$\"}, \"$expr\": {\"$and\": [{\"$gte\": [\"$timestamp\", {\"$toDate\": $__from}]}, {\"$lte\": [\"$timestamp\", {\"$toDate\": $__to}]}]}}}, {\"$group\": {\"_id\": {\"$dateTrunc\": {\"date\": \"$timestamp\", \"unit\": \"hour\"}}, \"revenue\": {\"$sum\": \"$amount\"}, \"orders\": {\"$sum\": 1}}}, {\"$project\": {\"_id\": 0, \"timestamp\": \"$_id\", \"revenue\": {\"$round\": [\"$revenue\", 2]}, \"orders\": 1}}, {\"$sort\": {\"timestamp\": 1}}]",
           "timeField": "timestamp",
           "format": "time_series",
           "legendFormat": ""
@@ -543,7 +546,7 @@
           "refId": "A",
           "database": "demo",
           "collection": "orders",
-          "pipeline": "[{\"$match\": {\"status\": \"completed\"}}, {\"$group\": {\"_id\": \"$category\", \"total\": {\"$sum\": \"$amount\"}}}, {\"$project\": {\"_id\": 0, \"category\": \"$_id\", \"total\": {\"$round\": [\"$total\", 2]}}}, {\"$sort\": {\"total\": -1}}]",
+          "pipeline": "[{\"$match\": {\"status\": \"completed\", \"category\": {\"$regex\": \"^${cat}$\"}}}, {\"$group\": {\"_id\": \"$category\", \"total\": {\"$sum\": \"$amount\"}}}, {\"$project\": {\"_id\": 0, \"category\": \"$_id\", \"total\": {\"$round\": [\"$total\", 2]}}}, {\"$sort\": {\"total\": -1}}]",
           "timeField": "",
           "format": "table",
           "legendFormat": ""
@@ -579,7 +582,7 @@
           "refId": "A",
           "database": "demo",
           "collection": "orders",
-          "pipeline": "[{\"$match\": {\"status\": \"completed\"}}, {\"$group\": {\"_id\": \"$product\", \"total_qty\": {\"$sum\": \"$quantity\"}, \"total_revenue\": {\"$sum\": \"$amount\"}}}, {\"$project\": {\"_id\": 0, \"product\": \"$_id\", \"total_qty\": 1, \"total_revenue\": {\"$round\": [\"$total_revenue\", 2]}}}, {\"$sort\": {\"total_qty\": -1}}]",
+          "pipeline": "[{\"$match\": {\"status\": \"completed\", \"category\": {\"$regex\": \"^${cat}$\"}}}, {\"$group\": {\"_id\": \"$product\", \"total_qty\": {\"$sum\": \"$quantity\"}, \"total_revenue\": {\"$sum\": \"$amount\"}}}, {\"$project\": {\"_id\": 0, \"product\": \"$_id\", \"total_qty\": 1, \"total_revenue\": {\"$round\": [\"$total_revenue\", 2]}}}, {\"$sort\": {\"total_qty\": -1}}]",
           "timeField": "",
           "format": "table",
           "legendFormat": ""
@@ -614,7 +617,7 @@
           "refId": "A",
           "database": "demo",
           "collection": "orders",
-          "pipeline": "[{\"$group\": {\"_id\": \"$region\", \"count\": {\"$sum\": 1}, \"revenue\": {\"$sum\": \"$amount\"}}}, {\"$project\": {\"_id\": 0, \"region\": \"$_id\", \"count\": 1, \"revenue\": {\"$round\": [\"$revenue\", 2]}}}, {\"$sort\": {\"region\": 1}}]",
+          "pipeline": "[{\"$match\": {\"category\": {\"$regex\": \"^${cat}$\"}}}, {\"$group\": {\"_id\": \"$region\", \"count\": {\"$sum\": 1}, \"revenue\": {\"$sum\": \"$amount\"}}}, {\"$project\": {\"_id\": 0, \"region\": \"$_id\", \"count\": 1, \"revenue\": {\"$round\": [\"$revenue\", 2]}}}, {\"$sort\": {\"region\": 1}}]",
           "timeField": "",
           "format": "table",
           "legendFormat": ""
@@ -647,7 +650,7 @@
           "refId": "A",
           "database": "demo",
           "collection": "orders",
-          "pipeline": "[{\"$group\": {\"_id\": \"$status\", \"count\": {\"$sum\": 1}}}, {\"$project\": {\"_id\": 0, \"status\": \"$_id\", \"count\": 1}}, {\"$sort\": {\"status\": 1}}]",
+          "pipeline": "[{\"$match\": {\"category\": {\"$regex\": \"^${cat}$\"}}}, {\"$group\": {\"_id\": \"$status\", \"count\": {\"$sum\": 1}}}, {\"$project\": {\"_id\": 0, \"status\": \"$_id\", \"count\": 1}}, {\"$sort\": {\"status\": 1}}]",
           "timeField": "",
           "format": "table",
           "legendFormat": ""
@@ -683,7 +686,7 @@
           "refId": "A",
           "database": "demo",
           "collection": "orders",
-          "pipeline": "[{\"$match\": {\"status\": \"completed\"}}, {\"$group\": {\"_id\": \"$category\", \"avg_value\": {\"$avg\": \"$amount\"}}}, {\"$project\": {\"_id\": 0, \"category\": \"$_id\", \"avg_value\": {\"$round\": [\"$avg_value\", 2]}}}, {\"$sort\": {\"avg_value\": -1}}]",
+          "pipeline": "[{\"$match\": {\"status\": \"completed\", \"category\": {\"$regex\": \"^${cat}$\"}}}, {\"$group\": {\"_id\": \"$category\", \"avg_value\": {\"$avg\": \"$amount\"}}}, {\"$project\": {\"_id\": 0, \"category\": \"$_id\", \"avg_value\": {\"$round\": [\"$avg_value\", 2]}}}, {\"$sort\": {\"avg_value\": -1}}]",
           "timeField": "",
           "format": "table",
           "legendFormat": ""
