@@ -48,5 +48,3 @@ ci/
 # TLS certs (generated)
 docker/tls/certs/
 
-# Package lock
-bun.lock

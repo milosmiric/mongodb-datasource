@@ -1,5 +1,5 @@
 <p align="center">
-  <img src="src/img/logo.svg" width="80" height="80" alt="MongoDB Datasource Plugin">
+  <img src="https://raw.githubusercontent.com/milosmiric/mongodb-datasource/main/src/img/logo.svg" width="80" height="80" alt="MongoDB Datasource Plugin">
 </p>
 
 <h1 align="center">MongoDB Datasource Plugin for Grafana</h1>
@@ -30,13 +30,13 @@ The official Grafana MongoDB plugin is **Enterprise-only**. The best community a
 ## Screenshots
 
 ### Sample Dashboard — Time Series, Gauges & Aggregations
-![Dashboard - Sensors & Aggregations](src/img/dashboard-1.png)
+![Dashboard - Sensors & Aggregations](https://raw.githubusercontent.com/milosmiric/mongodb-datasource/main/src/img/dashboard-1.png)
 
 ### Sample Dashboard — Orders Analytics & BSON Types
-![Dashboard - Orders & BSON Types](src/img/dashboard-2.png)
+![Dashboard - Orders & BSON Types](https://raw.githubusercontent.com/milosmiric/mongodb-datasource/main/src/img/dashboard-2.png)
 
 ### Configuration
-![Config Editor](src/img/add-connection.png)
+![Config Editor](https://raw.githubusercontent.com/milosmiric/mongodb-datasource/main/src/img/add-connection.png)
 
 ## Quick Start
 
@@ -70,7 +70,7 @@ mongodb://username:password@host:port/database
 
 Supports SCRAM-SHA-256, SCRAM-SHA-1, X.509 authentication, TLS/SSL, and Atlas SRV connections.
 
-See [docs/configuration.md](docs/configuration.md) for the full configuration guide including provisioning examples.
+See [docs/configuration.md](https://github.com/milosmiric/mongodb-datasource/blob/main/docs/configuration.md) for the full configuration guide including provisioning examples.
 
 ## Query Examples
 
@@ -105,22 +105,23 @@ Queries use MongoDB [aggregation pipelines](https://www.mongodb.com/docs/manual/
 ]
 ```
 
-Built-in macros (`$__timeFilter`, `$__timeGroup`, `$__oidFilter`, `$__timeFilter_ms`), smart match (`$__match`), and 15+ template variables. See [docs/template-variables.md](docs/template-variables.md) for the complete reference.
+Built-in macros (`$__timeFilter`, `$__timeGroup`, `$__oidFilter`, `$__timeFilter_ms`), smart match (`$__match`), and 15+ template variables. See [docs/template-variables.md](https://github.com/milosmiric/mongodb-datasource/blob/main/docs/template-variables.md) for the complete reference.
 
-See [docs/queries.md](docs/queries.md) for the full query guide with patterns for time bucketing, joins, variable dropdowns, and performance tips.
+See [docs/queries.md](https://github.com/milosmiric/mongodb-datasource/blob/main/docs/queries.md) for the full query guide with patterns for time bucketing, joins, variable dropdowns, and performance tips.
 
 ## Development
 
 ### Prerequisites
 
-- [Bun](https://bun.sh/) >= 1.0
+- [Node.js](https://nodejs.org/) >= 22
 - [Go](https://go.dev/) >= 1.23
+- [Mage](https://magefile.org/) (Go build tool)
 - [Docker](https://www.docker.com/) and Docker Compose
 
 ### Build & Run
 
 ```bash
-bun install                   # Install frontend dependencies
+npm install                   # Install frontend dependencies
 make build                    # Build frontend + backend
 make up                       # Start Grafana + MongoDB
 ```
@@ -143,7 +144,7 @@ All development tasks are available as `make` targets. Run `make help` for the f
 | `make health` | Check Grafana and datasource health |
 | `make fresh` | Full clean rebuild from scratch |
 
-See [docs/development.md](docs/development.md) for the full development guide covering architecture, debugging, CI/CD, and project structure.
+See [docs/development.md](https://github.com/milosmiric/mongodb-datasource/blob/main/docs/development.md) for the full development guide covering architecture, debugging, CI/CD, and project structure.
 
 ## Architecture
 
@@ -174,7 +175,7 @@ Future milestones:
 
 ## Contributing
 
-See [CONTRIBUTING.md](CONTRIBUTING.md) for branch naming, PR process, code style, and test requirements.
+See [CONTRIBUTING.md](https://github.com/milosmiric/mongodb-datasource/blob/main/CONTRIBUTING.md) for branch naming, PR process, code style, and test requirements.
 
 ## Author
 
@@ -186,4 +187,4 @@ See [CONTRIBUTING.md](CONTRIBUTING.md) for branch naming, PR process, code style
 
 ## License
 
-GNU Affero General Public License v3.0. See [LICENSE](LICENSE).
+GNU Affero General Public License v3.0. See [LICENSE](https://github.com/milosmiric/mongodb-datasource/blob/main/LICENSE).

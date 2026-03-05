@@ -6,8 +6,9 @@ Thank you for your interest in contributing to the MongoDB Datasource Plugin for
 
 ### Prerequisites
 
-- [Bun](https://bun.sh/) >= 1.0 (package manager)
+- [Node.js](https://nodejs.org/) >= 22 (with npm)
 - [Go](https://go.dev/) >= 1.23
+- [Mage](https://magefile.org/) (Go build tool)
 - [Docker](https://www.docker.com/) and Docker Compose
 
 ### Getting Started
@@ -18,16 +19,16 @@ git clone https://github.com/milosmiric/mongodb-datasource.git
 cd mongodb-datasource
 
 # Install frontend dependencies
-bun install
+npm install
 
 # Start the development environment
 docker compose up -d
 
 # Build frontend (watch mode)
-bun run dev
+npm run dev
 
 # Build backend
-go build -o dist/gpx_mongodb-datasource_$(go env GOOS)_$(go env GOARCH) ./pkg
+mage buildAll
 ```
 
 ## Branch Naming
@@ -46,9 +47,9 @@ go build -o dist/gpx_mongodb-datasource_$(go env GOOS)_$(go env GOARCH) ./pkg
 4. Ensure all tests pass:
    ```bash
    go test ./pkg/... -v -race
-   bun run test
-   bun run typecheck
-   bun run lint
+   npm run test
+   npm run typecheck
+   npm run lint
    ```
 5. Update documentation if needed
 6. Submit a pull request with a clear description of the changes
@@ -72,7 +73,7 @@ go build -o dist/gpx_mongodb-datasource_$(go env GOOS)_$(go env GOARCH) ./pkg
 - Use `@grafana/ui` components
 - All components must have accessibility labels
 - JSDoc comments on all exported items
-- Run `bun run lint` and `bun run typecheck` before submitting
+- Run `npm run lint` and `npm run typecheck` before submitting
 
 ## Running the Full Test Suite
 
@@ -81,25 +82,25 @@ go build -o dist/gpx_mongodb-datasource_$(go env GOOS)_$(go env GOARCH) ./pkg
 go test ./pkg/... -v -race
 
 # Frontend unit tests
-bun run test
+npm run test
 
 # Type checking
-bun run typecheck
+npm run typecheck
 
 # Linting
-bun run lint
-go run github.com/golangci/golangci-lint/cmd/golangci-lint@latest run
+npm run lint
+golangci-lint run
 
 # E2E tests (requires Docker Compose)
 docker compose up -d
-bun run e2e:install
-bun run e2e
+npm run e2e:install
+npm run e2e
 docker compose down
 ```
 
 ## Package Manager
 
-**Bun is the only package manager for this project.** Do not use npm, yarn, or pnpm. All commands should use `bun` or `bunx`.
+**npm is the only package manager for this project.** Do not use yarn or pnpm. All commands should use `npm` or `npx`.
 
 ## License
 

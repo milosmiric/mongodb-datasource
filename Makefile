@@ -24,20 +24,16 @@ build-frontend: ## Build the React frontend (production)
 	npm run build
 
 .PHONY: build-backend
-build-backend: ## Build the Go backend for the current platform
-	go build -o $(DIST)/$(GO_BINARY)_$(GOOS)_$(GOARCH) ./pkg
+build-backend: ## Build the Go backend for the current platform (with manifest)
+	mage build:$(GOOS)
 
 .PHONY: build-backend-debug
 build-backend-debug: ## Build the Go backend with debug symbols
 	go build -gcflags="all=-N -l" -o $(DIST)/$(GO_BINARY)_$(GOOS)_$(GOARCH) ./pkg
 
 .PHONY: build-backend-all
-build-backend-all: ## Cross-compile the Go backend for all platforms
-	GOOS=linux  GOARCH=amd64 go build -o $(DIST)/$(GO_BINARY)_linux_amd64   ./pkg
-	GOOS=linux  GOARCH=arm64 go build -o $(DIST)/$(GO_BINARY)_linux_arm64   ./pkg
-	GOOS=darwin GOARCH=amd64 go build -o $(DIST)/$(GO_BINARY)_darwin_amd64  ./pkg
-	GOOS=darwin GOARCH=arm64 go build -o $(DIST)/$(GO_BINARY)_darwin_arm64  ./pkg
-	GOOS=windows GOARCH=amd64 go build -o $(DIST)/$(GO_BINARY)_windows_amd64.exe ./pkg
+build-backend-all: ## Cross-compile the Go backend for all platforms (with manifest)
+	mage buildAll
 
 .PHONY: dev
 dev: ## Start frontend in watch mode (auto-rebuild on changes)

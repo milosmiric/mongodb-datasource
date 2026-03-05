@@ -6,12 +6,12 @@ This guide covers the development setup, project architecture, and build process
 
 | Tool | Version | Purpose |
 |------|---------|---------|
-| [Bun](https://bun.sh/) | >= 1.0 | Package manager and script runner |
+| [Node.js](https://nodejs.org/) | >= 22 | Runtime and package manager (npm) |
 | [Go](https://go.dev/) | >= 1.23 | Backend plugin development |
+| [Mage](https://magefile.org/) | Latest | Go build targets |
 | [Docker](https://www.docker.com/) | Latest | Development environment |
-| [Mage](https://magefile.org/) | Latest | Go build targets (optional) |
 
-> **Important**: This project uses **Bun exclusively** as the package manager. Do not use npm, yarn, or pnpm.
+> **Important**: This project uses **npm** as the package manager. Do not use yarn, pnpm, or bun.
 
 ## Quick Setup
 
@@ -21,7 +21,7 @@ git clone https://github.com/milosmiric/mongodb-datasource.git
 cd mongodb-datasource
 
 # Install frontend dependencies
-bun install
+npm install
 
 # Build and start everything
 make build
@@ -284,7 +284,7 @@ Test coverage areas:
 ### Frontend Unit Tests
 
 ```bash
-bun run test             # Watch mode (interactive)
+npm run test             # Watch mode (interactive)
 make test-frontend       # CI mode (single run)
 ```
 
