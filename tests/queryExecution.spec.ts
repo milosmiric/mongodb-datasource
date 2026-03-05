@@ -119,4 +119,53 @@ test.describe('Query Execution', () => {
 
     await expect(page.getByText('No data')).toBeVisible({ timeout: 15000 });
   });
+
+  test('$__timeFilter macro returns time-filtered data', async ({ page }) => {
+    await fillAndRunQuery(page, {
+      database: 'demo',
+      collection: 'sensors',
+      pipeline: '[{"$match": {$__timeFilter(timestamp)}}, {"$limit": 10}, {"$project": {"_id": 0, "timestamp": 1, "value": 1, "sensor": 1}}]',
+    });
+
+    // Should return data (sensors collection has timestamps within the default range).
+    await expect(page.getByText('No data')).not.toBeVisible({ timeout: 15000 });
+  });
+
+  test('$__timeGroup macro produces bucketed results', async ({ page }) => {
+    await fillAndRunQuery(page, {
+      database: 'demo',
+      collection: 'sensors',
+      pipeline: '[{"$match": {$__timeFilter(timestamp)}}, {"$group": {"_id": $__timeGroup(timestamp), "count": {"$sum": 1}}}, {"$project": {"_id": 0, "timestamp": "$_id", "count": 1}}, {"$sort": {"timestamp": 1}}, {"$limit": 20}]',
+      format: 'time_series',
+      timeField: 'timestamp',
+    });
+
+    // Should render a chart with bucketed data.
+    await expect(page.locator('canvas').first()).toBeVisible({ timeout: 15000 });
+  });
+
+  test('$__timeFilter_ms macro filters epoch-ms timestamps', async ({ page }) => {
+    // The sensors collection has BSON Date timestamps. $__timeFilter_ms converts
+    // time range to epoch ms for comparison. We add a ts_ms field then filter it.
+    await fillAndRunQuery(page, {
+      database: 'demo',
+      collection: 'sensors',
+      pipeline: '[{"$addFields": {"ts_ms": {"$toLong": "$timestamp"}}}, {"$match": {$__timeFilter_ms(ts_ms)}}, {"$limit": 10}, {"$project": {"_id": 0, "sensor": 1, "value": 1, "ts_ms": 1}}]',
+    });
+
+    // Should return sensor data (not "No data").
+    await expect(page.getByText('No data')).not.toBeVisible({ timeout: 15000 });
+  });
+
+  test('$__oidFilter macro filters by ObjectId range', async ({ page }) => {
+    // Use $__oidFilter to filter documents by their _id ObjectId timestamp range.
+    await fillAndRunQuery(page, {
+      database: 'demo',
+      collection: 'users',
+      pipeline: '[{"$match": {$__oidFilter(_id)}}, {"$project": {"_id": 0, "name": 1, "email": 1}}]',
+    });
+
+    // Should return user data filtered by ObjectId time range.
+    await expect(page.getByText('No data')).not.toBeVisible({ timeout: 15000 });
+  });
 });

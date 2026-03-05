@@ -18,11 +18,13 @@ Open-source Grafana datasource plugin for MongoDB. Plugin ID: `milosmiric-mongod
 - Structured logging with `log.DefaultLogger`
 - Context propagation through all query/connection methods
 - Error wrapping with `fmt.Errorf("context: %w", err)`
-- Template variable interpolation: `$__from`, `$__to`, `$__interval`, `$__from_ms`, `$__to_ms`
+- Template variable interpolation: `$__from`, `$__to`, `$__from_ms`, `$__to_ms`, `$__from_s`, `$__to_s`, `$__from_oid`, `$__to_oid`, `$__range_ms`, `$__range_s`, `$__interval`, `$__interval_ms`, `$__interval_unit`, `$__interval_binSize`, `$__maxDataPoints`
+- Macros: `$__timeFilter(field)`, `$__timeFilter_ms(field)`, `$__oidFilter(field)`, `$__timeGroup(field)`
+- Smart match: `$__match` stage handles All/single/multi-value with index-friendly operators
 
 ## Package Manager
 
-**Bun only.** No npm, yarn, or pnpm. All commands use `bun` or `bunx`.
+**Bun only.** No npm, yarn, or pnpm. All commands use `bun` or `bunx`. Never use `python3` or `node` — use `bun` for any scripting needs.
 
 ## Ports
 
@@ -32,26 +34,44 @@ Open-source Grafana datasource plugin for MongoDB. Plugin ID: `milosmiric-mongod
 
 ## Commands
 
-```bash
-# Frontend
-bun install          # Install dependencies
-bun run dev          # Watch mode build
-bun run build        # Production build
-bun run test         # Jest unit tests
-bun run typecheck    # TypeScript check
-bun run lint         # ESLint
+**Prefer `make` targets** over raw commands. Run `make help` to see all targets.
 
-# Backend
-go test ./pkg/... -v -race   # Go tests
-go build -o dist/gpx_mongodb-datasource_$(go env GOOS)_$(go env GOARCH) ./pkg
+```bash
+# Build
+make build              # Build frontend + backend
+make build-frontend     # Frontend only (bun run build)
+make build-backend      # Go backend for current platform
+make dev                # Frontend watch mode (bun run dev)
+
+# Test
+make test               # All tests (Go + Jest)
+make test-backend       # Go tests with race detector
+make test-frontend      # Jest frontend tests
+make e2e                # Playwright E2E tests (requires Docker)
+make e2e-install        # Install Playwright browsers
+
+# Lint & Check
+make lint               # All linters (ESLint + golangci-lint)
+make typecheck          # TypeScript type checking
+make check              # lint + typecheck + test
 
 # Docker
-docker compose up -d   # Start dev environment
-docker compose down    # Stop dev environment
+make up                 # Start Grafana + MongoDB
+make down               # Stop containers
+make restart-grafana    # Restart Grafana (picks up new backend binary)
+make rebuild            # Build everything + restart Grafana
+make logs               # Tail all container logs
 
-# E2E
-bun run e2e:install   # Install Playwright
-bun run e2e           # Run E2E tests
+# Database
+make db-seed            # Seed demo data
+make db-reset           # Drop + re-seed
+make db-shell           # Interactive MongoDB shell
+make db-random          # Insert 500 random sensor readings
+
+# Utilities
+make health             # Check Grafana + datasource health
+make clean              # Remove build artifacts
+make fresh              # Full clean rebuild from scratch
 ```
 
 ## File Structure
@@ -60,13 +80,16 @@ bun run e2e           # Run E2E tests
 - `pkg/plugin/query.go` — Query parsing, pipeline building, variable interpolation
 - `pkg/plugin/converters.go` — BSON → DataFrame conversion
 - `pkg/plugin/models.go` — Query and settings type definitions
-- `pkg/plugin/errors.go` — Sentinel errors
+- `pkg/plugin/errors.go` — Sentinel errors (ErrInvalidMacro, etc.)
 - `src/components/ConfigEditor/` — Datasource settings form
-- `src/components/QueryEditor/` — Query editor with sub-components
+- `src/components/QueryEditor/` — Query editor with sub-components (PipelineEditor has formatPipeline)
 - `src/hooks/` — Data fetching hooks (useDatabases, useCollections)
 - `src/types.ts` — TypeScript type definitions
 - `provisioning/` — Grafana provisioning (datasource + dashboards)
 - `docker/mongo-seed/` — MongoDB seed data
+- `docs/template-variables.md` — Complete reference for variables, macros, and $__match
+- `docs/queries.md` — Query guide with pipeline patterns and examples
+- `docs/e2e-testing.md` — Grafana 12.4 E2E testing patterns and selectors
 
 ## Dependencies
 

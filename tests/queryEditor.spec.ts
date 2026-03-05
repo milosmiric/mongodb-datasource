@@ -19,7 +19,8 @@ test.describe('Query Editor', () => {
     await openNewPanelEditor(page);
 
     // Table format is the default — the "Table" radio should be checked.
-    await expect(page.locator('input[id*="option-table"]')).toBeChecked();
+    // Scope to query editor row to avoid matching the Legend display mode radio.
+    await expect(page.getByTestId('query-editor-row').locator('input[id*="option-table"]')).toBeChecked();
 
     // Time Field label should not be visible in table mode.
     await expect(page.locator('label', { hasText: 'Time Field' })).not.toBeVisible();

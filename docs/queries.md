@@ -63,19 +63,16 @@ Example — temperature readings over time:
 
 ```json
 [
-  { "$match": {
-      "sensor": "temperature",
-      "timestamp": {
-        "$gte": { "$date": "$__from" },
-        "$lte": { "$date": "$__to" }
-      }
-  }},
+  { "$match": { "sensor": "temperature" } },
+  { "$match": { $__timeFilter(timestamp) } },
   { "$sort": { "timestamp": 1 } },
   { "$project": { "_id": 0, "timestamp": 1, "value": 1, "location": 1 } }
 ]
 ```
 
 ## Template Variables
+
+> **See [Template Variables & Macros](template-variables.md) for the complete reference**, including macros (`$__timeFilter`, `$__timeGroup`, `$__oidFilter`), smart match (`$__match`), and all available variables.
 
 The plugin replaces these variables before sending the pipeline to MongoDB:
 
@@ -87,14 +84,31 @@ The plugin replaces these variables before sending the pipeline to MongoDB:
 | `$__to` | End of dashboard time range | `{"$date":"2024-01-02T00:00:00Z"}` (Extended JSON) |
 | `$__from_ms` | Start as Unix milliseconds | `1704067200000` |
 | `$__to_ms` | End as Unix milliseconds | `1704153600000` |
+| `$__from_s` | Start as Unix seconds | `1704067200` |
+| `$__to_s` | End as Unix seconds | `1704153600` |
+| `$__from_oid` | Start as ObjectId (lower bound) | `{"$oid":"659200800000000000000000"}` |
+| `$__to_oid` | End as ObjectId (upper bound) | `{"$oid":"65935200ffffffffffffffff"}` |
+| `$__range_ms` | Time range duration in milliseconds | `86400000` |
+| `$__range_s` | Time range duration in seconds | `86400` |
 | `$__interval` | Suggested bucket interval | `60000ms` |
 | `$__interval_ms` | Suggested interval in ms | `60000` |
+| `$__interval_unit` | MongoDB time unit for `$dateTrunc` | `"minute"` |
+| `$__interval_binSize` | Bin size for `$dateTrunc` | `15` |
+| `$__maxDataPoints` | Panel's max data points | `500` |
 
 All variables support both `$__var` and `${__var}` syntax.
 
 ### Using Time Range in `$match`
 
-The most common pattern is filtering documents to the dashboard's selected time range:
+The recommended approach is to use the `$__timeFilter` macro:
+
+```json
+[
+  { "$match": { $__timeFilter(timestamp) } }
+]
+```
+
+This expands to a `$gte`/`$lte` range using Extended JSON dates. You can also write it manually:
 
 ```json
 [
@@ -122,11 +136,25 @@ If your timestamps are stored as Unix milliseconds instead of BSON dates:
 
 ### Time-Based Bucketing
 
-Use `$__interval_ms` for grouping data into time buckets:
+The recommended approach is to use the `$__timeGroup` macro, which automatically selects the right unit and bin size:
 
 ```json
 [
-  { "$match": { "timestamp": { "$gte": { "$date": "$__from" }, "$lte": { "$date": "$__to" } } } },
+  { "$match": { $__timeFilter(timestamp) } },
+  { "$group": {
+      "_id": $__timeGroup(timestamp),
+      "avg_value": { "$avg": "$value" }
+  }},
+  { "$project": { "_id": 0, "timestamp": "$_id", "avg_value": 1 } },
+  { "$sort": { "timestamp": 1 } }
+]
+```
+
+You can also use `$__interval_ms` directly for manual bucketing, or `$__interval_unit` / `$__interval_binSize` with `$dateTrunc`:
+
+```json
+[
+  { "$match": { $__timeFilter(timestamp) } },
   { "$group": {
       "_id": {
         "$subtract": [
@@ -144,7 +172,21 @@ Use `$__interval_ms` for grouping data into time buckets:
 
 ### Dashboard Variables
 
-Grafana dashboard template variables (e.g., `$sensor`, `$location`) are replaced by the frontend before the query is sent to the backend:
+Grafana dashboard template variables (e.g., `$sensor`, `$location`) are replaced by the frontend before the query is sent to the backend.
+
+For multi-select variables with an "All" option, use the `$__match` stage instead of a regular `$match`:
+
+```json
+[
+  { "$__match": { "sensor": ${sensor_type:json}, "location": ${loc:json} } },
+  { "$match": { $__timeFilter(timestamp) } },
+  { "$sort": { "timestamp": 1 } }
+]
+```
+
+`$__match` automatically handles single values (exact match), arrays (`$in`), and `"$__all"` (drops the field/stage). See [Template Variables & Macros](template-variables.md) for details.
+
+For simple string matching without multi-select:
 
 ```json
 [
@@ -203,7 +245,7 @@ To display multiple lines on a time series panel (e.g., one per sensor), include
 
 ```json
 [
-  { "$match": { "timestamp": { "$gte": { "$date": "$__from" }, "$lte": { "$date": "$__to" } } } },
+  { "$match": { $__timeFilter(timestamp) } },
   { "$sort": { "timestamp": 1 } },
   { "$project": { "_id": 0, "timestamp": 1, "value": 1, "sensor": 1 } }
 ]
@@ -238,4 +280,5 @@ The plugin automatically converts BSON types to Grafana DataFrame types:
 2. **Use `$project` to limit fields** — avoid transferring unnecessary data
 3. **Set a `$limit`** — prevent accidentally loading millions of documents
 4. **Use indexes** — ensure your `$match` and `$sort` stages use indexed fields
-5. **Prefer `$__from`/`$__to`** — always scope queries to the dashboard time range for time series data
+5. **Use `$__timeFilter(field)`** — always scope queries to the dashboard time range for time series data
+6. **Use `$__match` instead of `$regex`** — `$__match` uses exact match and `$in`, which leverage indexes; `$regex` forces collection scans

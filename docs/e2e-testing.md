@@ -83,13 +83,20 @@ Grafana replaces `$variable_name` globally in the pipeline string. If a variable
 
 ### $__from/$__to Are Replaced by Frontend
 Grafana frontend replaces `$__from` and `$__to` with **epoch milliseconds** (e.g., `1772572529755`) BEFORE the Go backend sees the query. The backend's own `$__from` interpolation never runs for dashboard queries.
-**Solution**: Use `$expr` + `$toDate` pattern in pipelines:
+**Solution**: Use the `$__timeFilter` macro instead of raw `$__from`/`$__to`:
+```json
+{"$match": {$__timeFilter(timestamp)}}
+```
+The macro is processed server-side and produces correct Extended JSON dates. If you need manual control, use `$expr` + `$toDate`:
 ```json
 {"$match": {"$expr": {"$and": [
   {"$gte": ["$timestamp", {"$toDate": $__from}]},
   {"$lte": ["$timestamp", {"$toDate": $__to}]}
 ]}}}
 ```
+
+### $__all Normalization
+When using `$__match` with `allValue: "$__all"`, Grafana outputs the bare string `$__all` without JSON quotes even when using `:json` format. The backend normalizes this automatically, but be aware of it when debugging pipeline interpolation.
 
 ## Test Patterns
 
@@ -116,4 +123,23 @@ function getPanelByTitle(page, title) {
 ```typescript
 const errorCount = await page.getByTestId('data-testid Panel data error message').count();
 expect(errorCount).toBe(0);
+```
+
+### Interact with Template Variable Dropdowns (Multi-Select Combobox)
+Grafana 12 multi-select template variables use a combobox pattern. Locate the variable container by its `data-testid`, then find the combobox input:
+```typescript
+const sensorVar = page.getByTestId('data-testid template variable').filter({
+  has: page.getByTestId('data-testid Dashboard template variables submenu Label Sensor'),
+});
+const combobox = sensorVar.getByRole('combobox');
+await combobox.click();
+await combobox.fill('temperature');
+await page.getByRole('option', { name: 'temperature' }).first().click();
+await page.keyboard.press('Escape');
+```
+
+### Scope Selectors to Avoid Strict Mode Violations
+Some elements like radio buttons appear in both the query editor and the panel options sidebar. Scope to the query editor row to avoid matching duplicates:
+```typescript
+page.getByTestId('query-editor-row').locator('input[id*="option-table"]')
 ```

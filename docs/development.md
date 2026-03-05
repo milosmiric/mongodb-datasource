@@ -73,7 +73,7 @@ mongodb-datasource/
 │   │   └── mongodb.yml         # Pre-configured MongoDB datasource
 │   └── dashboards/
 │       ├── dashboard.yml       # Dashboard provider config
-│       └── mongodb-sample.json # Sample dashboard with 4 panels
+│       └── mongodb-sample.json # Sample dashboard with macros, $__match, multi-select
 ├── src/                        # React/TypeScript frontend
 │   ├── module.ts               # Plugin entry point
 │   ├── datasource.ts           # DataSourceWithBackend extension
@@ -277,7 +277,7 @@ All tests use the mock `MongoClient` interface — no real MongoDB connection ne
 
 Test coverage areas:
 - `converters_test.go` — Every BSON type conversion (ObjectID, Decimal128, Date, Boolean, Int32, Int64, Double, String, Array, embedded doc, null, sparse documents)
-- `query_test.go` — Pipeline parsing, variable interpolation, query execution with mock client, error cases
+- `query_test.go` — Pipeline parsing, variable interpolation (15+ variables), macro expansion (`$__timeFilter`, `$__timeGroup`, `$__oidFilter`, `$__timeFilter_ms`), `$__match` stage processing, interval decomposition, query execution with mock client, error cases
 - `models_test.go` — JSON unmarshalling, validation, settings parsing
 - `datasource_test.go` — Health check, dispose lifecycle, multi-query handling
 
@@ -291,6 +291,7 @@ make test-frontend       # CI mode (single run)
 Test coverage areas:
 - `ConfigEditor.test.tsx` — Renders fields, onChange callbacks, conditional TLS/auth sections
 - `QueryEditor.test.tsx` — Renders sub-components, format toggle, time field visibility
+- `PipelineEditor.test.ts` — `formatPipeline` function: macro argument handling, template variable preservation, dotted fields, `$__match` stage keys, invalid JSON fallback
 
 ### E2E Tests (Playwright)
 
@@ -306,8 +307,11 @@ make e2e-ui              # Interactive UI mode
 E2E test scenarios:
 - Health check — Save & test, verify success message
 - Config editor — Navigate to settings, verify fields
-- Query editor — Create panel, verify editor components
-- Dashboards — Sample dashboard loads, panels render data
+- Query editor — Create panel, verify editor components, format toggle
+- Query execution — Table and time series queries, aggregation pipelines, error/empty states
+- Macros — `$__timeFilter`, `$__timeGroup`, `$__timeFilter_ms`, `$__oidFilter` end-to-end
+- Dashboards — Sample dashboard loads, all panels render data, no errors
+- Template variables — Single-select, multi-select, and "All" variable interactions
 
 ### Type Checking and Linting
 
@@ -355,6 +359,7 @@ The seed script (`docker/mongo-seed/seed.js`) creates a `demo` database with:
 | `sensors` | 1,000 | Time-series sensor readings (temperature, humidity, pressure, wind) |
 | `users` | 5 | User profiles with various field types |
 | `events` | 200 | Application events with nested metadata |
+| `orders` | ~5,000 | 180 days of order data (category, region, status, amount) |
 | `types_showcase` | 2 | Documents exercising all BSON types |
 
 ### Reset the Environment

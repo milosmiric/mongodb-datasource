@@ -8,6 +8,9 @@ The official Grafana MongoDB plugin is **Enterprise-only**. The best community a
 
 - Go backend for secure, high-performance MongoDB communication
 - Raw aggregation pipeline queries with template variable support
+- Built-in macros: `$__timeFilter(field)`, `$__timeGroup(field)`, `$__oidFilter(field)`, `$__timeFilter_ms(field)`
+- Smart `$__match` stage: index-friendly multi-select and "All" handling (replaces `$regex`)
+- 15+ built-in variables: time range, ObjectId, interval decomposition, panel resolution
 - Time-series and table output formats
 - Full BSON type conversion (ObjectID, Decimal128, Date, arrays, embedded docs, etc.)
 - Docker Compose development environment with sample data out of the box
@@ -61,7 +64,7 @@ Queries use MongoDB [aggregation pipelines](https://www.mongodb.com/docs/manual/
 
 ```json
 [
-  {"$match": {"sensor": "temperature", "timestamp": {"$gte": {"$date": "$__from"}, "$lte": {"$date": "$__to"}}}},
+  {"$match": {$__timeFilter(timestamp)}},
   {"$sort": {"timestamp": 1}},
   {"$project": {"_id": 0, "timestamp": 1, "value": 1, "location": 1}}
 ]
@@ -86,9 +89,9 @@ Queries use MongoDB [aggregation pipelines](https://www.mongodb.com/docs/manual/
 ]
 ```
 
-Template variables: `$__from`, `$__to`, `$__from_ms`, `$__to_ms`, `$__interval`, `$__interval_ms`, plus custom dashboard variables.
+Built-in macros (`$__timeFilter`, `$__timeGroup`, `$__oidFilter`, `$__timeFilter_ms`), smart match (`$__match`), and 15+ template variables. See [docs/template-variables.md](docs/template-variables.md) for the complete reference.
 
-See [docs/queries.md](docs/queries.md) for the complete query guide with patterns for time bucketing, joins, variable dropdowns, and performance tips.
+See [docs/queries.md](docs/queries.md) for the full query guide with patterns for time bucketing, joins, variable dropdowns, and performance tips.
 
 ## Development
 
@@ -152,7 +155,6 @@ Future milestones:
 - Alerting-specific features
 - Annotation queries
 - Explore integration
-- Connection string builder UI
 
 ## Contributing
 

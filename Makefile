@@ -208,12 +208,14 @@ rebuild: build restart-grafana ## Rebuild everything and restart Grafana
 	@echo "Plugin rebuilt. Grafana restarting at http://localhost:$(GRAFANA_PORT)"
 
 .PHONY: health
+PRETTY_JSON := bun -e 'Bun.stdin.text().then(t=>console.log(JSON.stringify(JSON.parse(t),null,2)))'
+
 health: ## Check Grafana and datasource health
 	@echo "Grafana health:"
-	@curl -sf http://localhost:$(GRAFANA_PORT)/api/health | python3 -m json.tool 2>/dev/null || echo "  Grafana not reachable on port $(GRAFANA_PORT)"
+	@curl -sf http://localhost:$(GRAFANA_PORT)/api/health | $(PRETTY_JSON) 2>/dev/null || echo "  Grafana not reachable on port $(GRAFANA_PORT)"
 	@echo ""
 	@echo "Datasource health:"
-	@curl -sf -u admin:admin http://localhost:$(GRAFANA_PORT)/api/datasources/uid/mongodb-demo/health | python3 -m json.tool 2>/dev/null || echo "  Datasource not reachable"
+	@curl -sf -u admin:admin http://localhost:$(GRAFANA_PORT)/api/datasources/uid/mongodb-demo/health | $(PRETTY_JSON) 2>/dev/null || echo "  Datasource not reachable"
 
 .PHONY: clean
 clean: ## Remove build artifacts

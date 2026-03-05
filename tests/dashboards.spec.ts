@@ -144,4 +144,68 @@ test.describe('Sample Dashboard', () => {
     const noDataCount = await page.getByText('No data').count();
     expect(noDataCount).toBe(0);
   });
+
+  test('selecting single sensor type still renders panels', async ({ page }) => {
+    // Grafana multi-select variable: find the variable container by its label data-testid,
+    // then locate the combobox input inside it.
+    const sensorVar = page.getByTestId('data-testid template variable').filter({
+      has: page.getByTestId('data-testid Dashboard template variables submenu Label Sensor'),
+    });
+    const combobox = sensorVar.getByRole('combobox');
+    await combobox.click();
+    await combobox.fill('temperature');
+    await page.getByRole('option', { name: 'temperature' }).first().click();
+    await page.keyboard.press('Escape');
+
+    // Wait for panels to refresh after variable change.
+    await page.waitForTimeout(5000);
+
+    // Sensor Readings panel should still render data (not error or "No data").
+    const panel = await waitForPanelData(page, 'Sensor Readings Over Time');
+    await expect(panel.locator('canvas').first()).toBeVisible({ timeout: 15000 });
+  });
+
+  test('selecting multiple sensor types still renders panels', async ({ page }) => {
+    // Find the Sensor variable container and interact with combobox.
+    const sensorVar = page.getByTestId('data-testid template variable').filter({
+      has: page.getByTestId('data-testid Dashboard template variables submenu Label Sensor'),
+    });
+    const combobox = sensorVar.getByRole('combobox');
+    await combobox.click();
+    await combobox.fill('temperature');
+    await page.getByRole('option', { name: 'temperature' }).first().click();
+
+    // Add a second value.
+    await combobox.fill('humidity');
+    await page.getByRole('option', { name: 'humidity' }).first().click();
+    await page.keyboard.press('Escape');
+
+    // Wait for panels to refresh after variable change.
+    await page.waitForTimeout(5000);
+
+    // Sensor Readings panel should still render data (multi-select → $in).
+    const panel = await waitForPanelData(page, 'Sensor Readings Over Time');
+    await expect(panel.locator('canvas').first()).toBeVisible({ timeout: 15000 });
+  });
+
+  test('selecting single category still renders order panels', async ({ page }) => {
+    // Scroll to Orders row.
+    await page.evaluate(() => window.scrollBy(0, 1200));
+
+    // Find Category variable container and interact with combobox.
+    const catVar = page.getByTestId('data-testid template variable').filter({
+      has: page.getByTestId('data-testid Dashboard template variables submenu Label Category'),
+    });
+    const combobox = catVar.getByRole('combobox');
+    await combobox.click();
+    await combobox.fill('electronics');
+    await page.getByRole('option', { name: 'electronics' }).first().click();
+    await page.keyboard.press('Escape');
+
+    // Wait for panels to refresh.
+    await page.waitForTimeout(5000);
+
+    // Sales by Category should still render.
+    await waitForPanelData(page, 'Sales by Category');
+  });
 });

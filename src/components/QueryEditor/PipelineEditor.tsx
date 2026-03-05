@@ -20,12 +20,12 @@ interface PipelineEditorProps {
  * The pipeline may contain Grafana template variables ($__from, $__to, etc.)
  * which are not valid JSON, so we temporarily replace them before formatting.
  */
-function formatPipeline(raw: string): string {
+export function formatPipeline(raw: string): string {
   const placeholders: Map<string, string> = new Map();
   let idx = 0;
 
   // Replace template variables with valid JSON placeholders.
-  const sanitized = raw.replace(/\$__\w+/g, (match) => {
+  const sanitized = raw.replace(/\$__\w+(?:\([^)]*\))?/g, (match) => {
     const key = `"__PLACEHOLDER_${idx++}__"`;
     placeholders.set(key, match);
     return key;
@@ -68,7 +68,7 @@ export function PipelineEditor({ value, onChange }: PipelineEditorProps) {
     <InlineField
       label="Pipeline"
       labelWidth={14}
-      tooltip="MongoDB aggregation pipeline as a JSON array. $__from and $__to are replaced with epoch milliseconds — wrap them with {$toDate: $__from} to convert to DateTime for $match comparisons."
+      tooltip="MongoDB aggregation pipeline as a JSON array. Macros: $__timeFilter(field), $__timeFilter_ms(field), $__oidFilter(field), $__timeGroup(field), $__match. See template variable docs for details."
       grow
     >
       <div data-testid="mongodb-pipeline-editor" style={{ width: '100%' }}>

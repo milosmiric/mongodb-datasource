@@ -28,6 +28,9 @@ var (
 	// ErrHealthCheckFailed indicates the health check could not complete.
 	ErrHealthCheckFailed = errors.New("health check failed")
 
+	// ErrInvalidMacro indicates a macro call has invalid syntax (e.g. empty field name).
+	ErrInvalidMacro = errors.New("invalid macro syntax")
+
 	// ErrUnsupportedBSONType indicates a BSON type that cannot be converted to a DataFrame value.
 	ErrUnsupportedBSONType = errors.New("unsupported BSON type")
 
