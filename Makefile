@@ -241,6 +241,17 @@ health: ## Check Grafana and datasource health
 	@echo "Datasource health:"
 	@curl -sf -u admin:admin http://localhost:$(GRAFANA_PORT)/api/datasources/uid/mongodb-demo/health | $(PRETTY_JSON) 2>/dev/null || echo "  Datasource not reachable"
 
+.PHONY: validate
+validate: ## Validate plugin archive with Grafana plugin-validator
+	@PLUGIN_VERSION=$$(node -e "console.log(require('./package.json').version)"); \
+	ARCHIVE=$(PLUGIN_ID)-$$PLUGIN_VERSION.zip; \
+	if [ ! -d "$(DIST)" ]; then echo "Run 'make build' first"; exit 1; fi; \
+	rm -f $$ARCHIVE; \
+	mv $(DIST) $(PLUGIN_ID) && zip -r $$ARCHIVE $(PLUGIN_ID) && mv $(PLUGIN_ID) $(DIST); \
+	echo "Validating $$ARCHIVE..."; \
+	npx -y @grafana/plugin-validator@latest $$ARCHIVE; \
+	rm -f $$ARCHIVE
+
 .PHONY: clean
 clean: ## Remove build artifacts
 	rm -rf $(DIST) coverage/ coverage.out coverage.html test-results/ playwright-report/

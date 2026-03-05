@@ -5,7 +5,7 @@
 <h1 align="center">MongoDB Datasource Plugin for Grafana</h1>
 
 <p align="center">
-  <a href="LICENSE"><img src="https://img.shields.io/github/license/milosmiric/mongodb-datasource" alt="License"></a>
+  <a href="https://github.com/milosmiric/mongodb-datasource/blob/main/LICENSE"><img src="https://img.shields.io/github/license/milosmiric/mongodb-datasource" alt="License"></a>
   <a href="https://github.com/milosmiric/mongodb-datasource/actions"><img src="https://img.shields.io/github/actions/workflow/status/milosmiric/mongodb-datasource/ci.yml?branch=main&label=CI" alt="CI"></a>
 </p>
 
