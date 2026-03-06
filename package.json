@@ -1,6 +1,6 @@
 {
   "name": "milosmiric-mongodb-datasource",
-  "version": "0.2.0",
+  "version": "0.1.0",
   "description": "MongoDB datasource plugin for Grafana. Query collections using aggregation pipelines with built-in macros, smart filtering, and full BSON type support.",
   "homepage": "https://github.com/milosmiric/mongodb-datasource",
   "repository": {
