@@ -4,7 +4,7 @@
  * Creates datasources via Grafana API and verifies health checks + queries
  * for SCRAM-SHA-256, SCRAM-SHA-1, X.509, and TLS-only connections.
  */
-import { test, expect } from '@playwright/test';
+import { test, expect } from '@grafana/plugin-e2e';
 import * as fs from 'fs';
 import * as path from 'path';
 
@@ -147,31 +147,28 @@ test.describe('Auth Mechanisms', () => {
     });
   });
 
-  /** Navigate to datasource settings and click Save & test. */
-  async function saveAndTest(page: import('@playwright/test').Page, uid: string) {
-    await page.goto(`/connections/datasources/edit/${uid}`);
-    await page.waitForSelector('text=MongoDB');
-    await page.getByRole('button', { name: /save & test/i }).click();
-  }
-
-  test('SCRAM-SHA-256 health check succeeds', async ({ page }) => {
-    await saveAndTest(page, 'e2e-scram256');
-    await expect(page.getByText(/MongoDB connected/i)).toBeVisible({ timeout: 15000 });
+  test('SCRAM-SHA-256 health check succeeds', async ({ gotoDataSourceConfigPage }) => {
+    const configPage = await gotoDataSourceConfigPage('e2e-scram256');
+    await expect(configPage.saveAndTest()).toBeOK();
+    await expect(configPage.ctx.page.getByText(/MongoDB connected/i)).toBeVisible({ timeout: 15000 });
   });
 
-  test('SCRAM-SHA-1 health check succeeds', async ({ page }) => {
-    await saveAndTest(page, 'e2e-scram1');
-    await expect(page.getByText(/MongoDB connected/i)).toBeVisible({ timeout: 15000 });
+  test('SCRAM-SHA-1 health check succeeds', async ({ gotoDataSourceConfigPage }) => {
+    const configPage = await gotoDataSourceConfigPage('e2e-scram1');
+    await expect(configPage.saveAndTest()).toBeOK();
+    await expect(configPage.ctx.page.getByText(/MongoDB connected/i)).toBeVisible({ timeout: 15000 });
   });
 
-  test('X.509 health check succeeds', async ({ page }) => {
-    await saveAndTest(page, 'e2e-x509');
-    await expect(page.getByText(/MongoDB connected/i)).toBeVisible({ timeout: 15000 });
+  test('X.509 health check succeeds', async ({ gotoDataSourceConfigPage }) => {
+    const configPage = await gotoDataSourceConfigPage('e2e-x509');
+    await expect(configPage.saveAndTest()).toBeOK();
+    await expect(configPage.ctx.page.getByText(/MongoDB connected/i)).toBeVisible({ timeout: 15000 });
   });
 
-  test('TLS-only health check succeeds', async ({ page }) => {
-    await saveAndTest(page, 'e2e-tls');
-    await expect(page.getByText(/MongoDB connected/i)).toBeVisible({ timeout: 15000 });
+  test('TLS-only health check succeeds', async ({ gotoDataSourceConfigPage }) => {
+    const configPage = await gotoDataSourceConfigPage('e2e-tls');
+    await expect(configPage.saveAndTest()).toBeOK();
+    await expect(configPage.ctx.page.getByText(/MongoDB connected/i)).toBeVisible({ timeout: 15000 });
   });
 
   test('SCRAM-SHA-256 query returns data', async ({ request }) => {
@@ -240,8 +237,9 @@ test.describe('Auth Mechanisms', () => {
     expect(body.results.A.frames.length).toBeGreaterThan(0);
   });
 
-  test('wrong password fails health check', async ({ page }) => {
-    await saveAndTest(page, 'e2e-wrong-pass');
-    await expect(page.getByText(/not initialized/i)).toBeVisible({ timeout: 15000 });
+  test('wrong password fails health check', async ({ gotoDataSourceConfigPage }) => {
+    const configPage = await gotoDataSourceConfigPage('e2e-wrong-pass');
+    await configPage.saveAndTest();
+    await expect(configPage.ctx.page.getByText(/not initialized/i)).toBeVisible({ timeout: 15000 });
   });
 });
