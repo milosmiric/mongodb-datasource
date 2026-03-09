@@ -30,7 +30,7 @@ Open-source Grafana datasource plugin for MongoDB. Plugin ID: `milosmiric-mongod
 
 - Grafana: **3105** (not 3000)
 - MongoDB: **27105** (not 27017)
-- Delve debugger: **2345**
+- Delve debugger: **2345** (disabled by default — uncomment in `.config/docker-compose-base.yaml`)
 
 ## Commands
 
@@ -89,7 +89,7 @@ make fresh              # Full clean rebuild from scratch
 - `docker/mongo-seed/` — MongoDB seed data
 - `docs/template-variables.md` — Complete reference for variables, macros, and $__match
 - `docs/queries.md` — Query guide with pipeline patterns and examples
-- `docs/e2e-testing.md` — Grafana 12.4 E2E testing patterns and selectors
+- `docs/e2e-testing.md` — @grafana/plugin-e2e patterns, fixtures, and gotchas
 
 ## Dependencies
 
@@ -105,8 +105,10 @@ make fresh              # Full clean rebuild from scratch
 
 ### E2E Testing Reference
 
-See [docs/e2e-testing.md](docs/e2e-testing.md) for Grafana 12.4 DOM selectors, test patterns, and gotchas including:
-- Use `data-testid` selectors (e.g., `data-testid RefreshPicker run button`) over text/role matchers
+Tests use `@grafana/plugin-e2e` — Grafana's official E2E framework. See [docs/e2e-testing.md](docs/e2e-testing.md) for patterns and gotchas including:
+- Use `panelEditPage`, `gotoDashboardPage`, `gotoDataSourceConfigPage` fixtures (not manual navigation)
+- Use `panelEditPage.setVisualization()` and `panelEditPage.refreshPanel()` (not manual DOM clicks)
+- Use `panel.getErrorIcon()` for dashboard panel assertions (`panel.data` only works in edit mode)
 - Monaco editor default values require explicit blur to commit to query model
 - Template variable names must not collide with MongoDB field references (`$field`)
 - `$__from`/`$__to` are replaced by Grafana frontend with epoch ms before backend processing

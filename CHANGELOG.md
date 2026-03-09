@@ -30,4 +30,4 @@
 - Docker Compose development environment with MongoDB 8, TLS, and sample data
 - CI/CD with GitHub Actions (lint, test, build, E2E, release)
 - E2E tests using `@grafana/plugin-e2e` — verified across Grafana 12.3, 12.4, and 13.0
-- 55 Go unit tests, 24 frontend tests, 50 E2E tests
+- 55 Go unit tests, 24 frontend tests, 49 E2E tests

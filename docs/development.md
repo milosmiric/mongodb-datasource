@@ -39,7 +39,7 @@ The development environment uses non-standard ports to avoid conflicts:
 |---------|------|---------|
 | Grafana | **3105** | 3000 |
 | MongoDB | **27105** | 27017 |
-| Delve (Go debugger) | **2345** | 2345 |
+| Delve (Go debugger) | **2345** | 2345 | Disabled by default — uncomment in `.config/docker-compose-base.yaml` to enable |
 
 ## Project Structure
 
@@ -293,7 +293,9 @@ Test coverage areas:
 - `QueryEditor.test.tsx` — Renders sub-components, format toggle, time field visibility
 - `PipelineEditor.test.ts` — `formatPipeline` function: macro argument handling, template variable preservation, dotted fields, `$__match` stage keys, invalid JSON fallback
 
-### E2E Tests (Playwright)
+### E2E Tests (Playwright + @grafana/plugin-e2e)
+
+Tests use [`@grafana/plugin-e2e`](https://grafana.com/developers/plugin-tools/e2e-test-a-plugin/introduction) — Grafana's official E2E framework with storage-state auth and version-safe fixtures (`panelEditPage`, `gotoDashboardPage`, `gotoDataSourceConfigPage`).
 
 Requires Docker Compose running:
 
@@ -302,16 +304,18 @@ make up                  # Start environment
 make e2e-install         # Install Chromium (first time only)
 make e2e                 # Run tests
 make e2e-ui              # Interactive UI mode
+make e2e-compat          # Cross-version: 12.3, 12.4, 13.0
 ```
 
-E2E test scenarios:
-- Health check — Save & test, verify success message
-- Config editor — Navigate to settings, verify fields
-- Query editor — Create panel, verify editor components, format toggle
-- Query execution — Table and time series queries, aggregation pipelines, error/empty states
-- Macros — `$__timeFilter`, `$__timeGroup`, `$__timeFilter_ms`, `$__oidFilter` end-to-end
-- Dashboards — Sample dashboard loads, all panels render data, no errors
-- Template variables — Single-select, multi-select, and "All" variable interactions
+49 E2E tests across 6 spec files:
+- `healthCheck` (1) — `saveAndTest()` + `toBeOK()`
+- `configEditor` (3) — Datasource settings page fields
+- `queryEditor` (6) — Panel editor components, format toggle
+- `queryExecution` (9) — Table/time-series queries, macros, errors, empty states
+- `dashboards` (22) — Sample dashboard panels, template variables
+- `authMechanisms` (8) — SCRAM-SHA-256/1, X.509, wrong password, API queries
+
+See [docs/e2e-testing.md](e2e-testing.md) for detailed patterns and gotchas.
 
 ### Type Checking and Linting
 
@@ -384,19 +388,17 @@ Runs on every push to `main` and all pull requests:
 
 | Job | What it does |
 |-----|-------------|
-| lint-frontend | ESLint + TypeScript type checking |
-| test-frontend | Jest with coverage report |
-| lint-backend | golangci-lint |
-| test-backend | Go tests with race detector and coverage |
-| build-frontend | Webpack production build |
-| build-backend | Cross-compile for 5 platforms |
-| e2e | Docker Compose + Playwright |
+| `build` | ESLint, TypeScript checks, Jest tests, webpack build, golangci-lint, Go tests, mage buildAll, plugin validation |
+| `resolve-versions` | Resolves Grafana E2E version matrix |
+| `playwright-tests` | E2E tests against each Grafana version (Docker Compose + Playwright) |
+| `publish-report` | Publishes Playwright report to GitHub Pages |
 
 ### Release Pipeline (`.github/workflows/release.yml`)
 
 Triggered by pushing a version tag (`v*`):
 
-1. Builds frontend and all backend binaries
-2. Signs the plugin (requires `GRAFANA_ACCESS_POLICY_TOKEN` secret)
-3. Packages as zip with checksums
-4. Creates a GitHub Release with changelog excerpt
+1. Builds frontend and all backend binaries via `grafana/plugin-actions/build-plugin@v1.2.0`
+2. Packages as zip with checksums
+3. Creates a GitHub Release with changelog excerpt
+
+> **Note**: Plugin signing is disabled until the plugin is published to the Grafana catalog. Uncomment the `policy_token` input in `release.yml` when ready.
