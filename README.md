@@ -48,17 +48,42 @@ Open [http://localhost:3105](http://localhost:3105) (admin/admin). The MongoDB d
 
 ## Installation
 
-### Grafana CLI
+### Unsigned Plugin (Manual)
+
+The plugin is pending Grafana catalog approval. Until then, install it manually:
+
+1. Download the latest `.zip` from [GitHub Releases](https://github.com/milosmiric/mongodb-datasource/releases)
+2. Extract to your Grafana plugins directory:
+   ```bash
+   unzip milosmiric-mongodb-datasource-*.zip -d /var/lib/grafana/plugins/
+   ```
+3. Allow the unsigned plugin in your Grafana configuration (`grafana.ini`):
+   ```ini
+   [plugins]
+   allow_loading_unsigned_plugins = milosmiric-mongodb-datasource
+   ```
+   Or via environment variable:
+   ```
+   GF_PLUGINS_ALLOW_LOADING_UNSIGNED_PLUGINS=milosmiric-mongodb-datasource
+   ```
+4. Restart Grafana
+
+### Docker / Docker Compose
+
+Add the environment variable to your Grafana container:
+
+```yaml
+environment:
+  GF_PLUGINS_ALLOW_LOADING_UNSIGNED_PLUGINS: milosmiric-mongodb-datasource
+volumes:
+  - ./path/to/milosmiric-mongodb-datasource:/var/lib/grafana/plugins/milosmiric-mongodb-datasource
+```
+
+### Grafana CLI (after catalog approval)
 
 ```bash
 grafana-cli plugins install milosmiric-mongodb-datasource
 ```
-
-### Manual
-
-1. Download the latest release from [GitHub Releases](https://github.com/milosmiric/mongodb-datasource/releases)
-2. Extract to your Grafana plugins directory (e.g., `/var/lib/grafana/plugins/`)
-3. Restart Grafana
 
 ## Configuration
 
