@@ -46,6 +46,11 @@ docker compose up
 
 Open [http://localhost:3105](http://localhost:3105) (admin/admin). The MongoDB datasource and a sample dashboard are pre-configured with demo data.
 
+## Compatibility
+
+- **Grafana** ≥ 12.3. Continuously tested in CI against Grafana 12.3, 12.4, 13.0, 13.1, and nightly.
+- **MongoDB** 4.0+ (standalone, replica set, or Atlas via SRV).
+
 ## Installation
 
 ### Unsigned Plugin (Manual)
