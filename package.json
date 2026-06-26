@@ -106,5 +106,9 @@
     "react-dom": "^18.3.0",
     "tslib": "^2.8.1"
   },
+  "overrides": {
+    "fast-uri": "3.1.2",
+    "flatted": "3.4.2"
+  },
   "packageManager": "npm@11.11.0"
 }
