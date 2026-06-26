@@ -36,15 +36,12 @@ export async function fillAndRunQuery(
   await selectOption(page, 'Select database', opts.database);
   await selectOption(page, 'Select collection', opts.collection);
 
-  // Scope to query editor row to avoid matching panel option labels.
-  const queryRow = page.getByTestId('query-editor-row');
-
   // Set format if needed.
   if (opts.format === 'time_series') {
     await panelEditPage.setVisualization('Time series');
-    await queryRow.locator('label[for*="option-time_series"]').click({ force: true });
+    await page.getByText('Time Series', { exact: true }).click({ force: true });
     if (opts.timeField) {
-      const timeInput = queryRow.getByPlaceholder('timestamp');
+      const timeInput = page.getByPlaceholder('timestamp');
       await timeInput.clear();
       await timeInput.fill(opts.timeField);
       await timeInput.blur();
@@ -59,8 +56,8 @@ export async function fillAndRunQuery(
   await page.keyboard.press(`${modifier}+a`);
   await page.keyboard.type(opts.pipeline, { delay: 5 });
 
-  // Click outside the editor to commit the pipeline value.
-  await queryRow.locator('label', { hasText: 'Pipeline' }).click({ force: true });
+  // Blur the editor to commit the pipeline value (CodeEditor commits onBlur).
+  await pipelineEditor.locator('textarea').first().blur();
 
   // Trigger query execution via plugin-e2e.
   await panelEditPage.refreshPanel();
