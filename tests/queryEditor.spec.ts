@@ -12,7 +12,9 @@ test.describe('Query Editor', () => {
     await expect(page.getByTestId('mongodb-pipeline-editor')).toBeVisible();
     await expect(page.getByRole('combobox', { name: 'Database' })).toBeVisible();
     await expect(page.getByRole('combobox', { name: 'Collection' })).toBeVisible();
-    await expect(page.getByRole('radiogroup', { name: 'Format' })).toBeVisible();
+    // Format control: assert the radio options render (works on Grafana 12 and 13,
+    // whose radiogroup accessible-name handling differs).
+    await expect(page.getByText('Time Series', { exact: true })).toBeVisible();
   });
 
   test('table format hides time field', async ({ panelEditPage, page }) => {
