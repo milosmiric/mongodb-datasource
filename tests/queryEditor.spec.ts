@@ -10,28 +10,26 @@ test.describe('Query Editor', () => {
     await panelEditPage.setVisualization('Table');
 
     await expect(page.getByTestId('mongodb-pipeline-editor')).toBeVisible();
-    await expect(page.locator('label', { hasText: 'Database' })).toBeVisible();
-    await expect(page.locator('label', { hasText: 'Collection' })).toBeVisible();
-    await expect(page.locator('label', { hasText: 'Format' })).toBeVisible();
+    await expect(page.getByRole('combobox', { name: 'Database' })).toBeVisible();
+    await expect(page.getByRole('combobox', { name: 'Collection' })).toBeVisible();
+    await expect(page.getByRole('radiogroup', { name: 'Format' })).toBeVisible();
   });
 
   test('table format hides time field', async ({ panelEditPage, page }) => {
     await panelEditPage.datasource.set('MongoDB');
     await panelEditPage.setVisualization('Table');
 
-    const queryRow = page.getByTestId('query-editor-row');
-    await expect(queryRow.locator('input[id*="option-table"]')).toBeChecked();
-    await expect(page.locator('label', { hasText: 'Time Field' })).not.toBeVisible();
+    await expect(page.getByRole('radio', { name: 'Table', includeHidden: true })).toBeChecked();
+    await expect(page.getByPlaceholder('timestamp')).not.toBeVisible();
   });
 
   test('switching to time_series format shows Time Field', async ({ panelEditPage, page }) => {
     await panelEditPage.datasource.set('MongoDB');
 
-    const queryRow = page.getByTestId('query-editor-row');
-    await queryRow.locator('label[for*="option-time_series"]').click({ force: true });
+    await page.getByText('Time Series', { exact: true }).click({ force: true });
 
-    await expect(queryRow.locator('label', { hasText: 'Time Field' })).toBeVisible({ timeout: 5000 });
-    await expect(queryRow.locator('label', { hasText: 'Legend' })).toBeVisible();
+    await expect(page.getByPlaceholder('timestamp')).toBeVisible({ timeout: 5000 });
+    await expect(page.getByPlaceholder('{{label}}')).toBeVisible();
   });
 
   test('database dropdown loads real databases', async ({ panelEditPage, page }) => {
@@ -63,8 +61,7 @@ test.describe('Query Editor', () => {
     // Commit the default pipeline and trigger query execution.
     const pipelineEditor = page.getByTestId('mongodb-pipeline-editor');
     await pipelineEditor.locator('.monaco-editor').first().click({ force: true });
-    const queryRow = page.getByTestId('query-editor-row');
-    await queryRow.locator('label', { hasText: 'Pipeline' }).click({ force: true });
+    await pipelineEditor.locator('textarea').first().blur();
 
     await panelEditPage.refreshPanel();
 

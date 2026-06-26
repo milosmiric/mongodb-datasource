@@ -1,5 +1,16 @@
 # Changelog
 
+## v0.2.0 (2026-06-27)
+
+### Maintenance & Compatibility
+
+- Grafana 13 support: bumped `@grafana/*` frontend packages from 12.4 to 13.1.0 (`grafanaDependency` floor kept at `>=12.3.0`, so Grafana 12 remains supported)
+- Updated `@grafana/create-plugin` scaffold from 7.0.3 to 7.8.0
+- Backend: bumped `grafana-plugin-sdk-go` from 0.290.0 to 0.292.1
+- Dev tooling: jest 29 → 30, prettier 3.8.3, sass 1.98.0, terser-webpack-plugin 5.4.0, plugin-e2e 3.9.1
+- CI: bumped GitHub Actions (mage-action v4, e2e-version v2.0.0, wait-for-grafana v1.0.3, is-compatible v1.0.3, create-plugin-update v2.0.2)
+- E2E: updated query-editor selectors for Grafana 13 DOM changes (renamed `query-editor-row` test id, `InlineField` label rendering, `RadioButtonGroup` markup)
+
 ## v0.1.0 (2026-03-06)
 
 ### Initial Release
