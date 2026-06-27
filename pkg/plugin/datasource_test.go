@@ -44,6 +44,50 @@ func TestCheckHealth_NilClient(t *testing.T) {
 	assert.Contains(t, result.Message, "not initialized")
 }
 
+// TestEnsureClient_ReconnectsAfterTransientFailure verifies that a connection
+// failure at creation time is not permanent: ensureClient retries on the next
+// call and caches the client once it succeeds (so MongoDB being briefly
+// unavailable at startup does not leave the datasource broken until re-saved).
+func TestEnsureClient_ReconnectsAfterTransientFailure(t *testing.T) {
+	calls := 0
+	mock := &mockMongoClient{serverVersion: "8.0.1"}
+	ds := &Datasource{
+		settings: DatasourceSettings{URI: "mongodb://localhost"},
+		newClient: func(_ context.Context, _ DatasourceSettings) (MongoClient, error) {
+			calls++
+			if calls == 1 {
+				return nil, errors.New("connection refused")
+			}
+			return mock, nil
+		},
+	}
+
+	// First attempt fails transiently — surfaced as ErrConnectionFailed, not cached.
+	_, err := ds.ensureClient(context.Background())
+	require.Error(t, err)
+	assert.ErrorIs(t, err, ErrConnectionFailed)
+
+	// Subsequent attempts reconnect and then reuse the cached client.
+	c, err := ds.ensureClient(context.Background())
+	require.NoError(t, err)
+	assert.Same(t, mock, c)
+
+	c2, err := ds.ensureClient(context.Background())
+	require.NoError(t, err)
+	assert.Same(t, mock, c2)
+	assert.Equal(t, 2, calls, "client factory must not be called once a connection is cached")
+}
+
+// TestEnsureClient_NoFactory verifies the nil-client path still errors when no
+// client and no factory are available (e.g. test construction without a client).
+func TestEnsureClient_NoFactory(t *testing.T) {
+	ds := newDatasourceWithClient(DatasourceSettings{URI: "mongodb://localhost"}, nil)
+
+	_, err := ds.ensureClient(context.Background())
+	require.Error(t, err)
+	assert.ErrorIs(t, err, ErrConnectionFailed)
+}
+
 func TestCheckHealth_PingFails(t *testing.T) {
 	client := &mockMongoClient{
 		pingErr: errors.New("connection refused"),

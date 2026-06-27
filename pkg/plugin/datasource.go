@@ -7,6 +7,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
+	"sync"
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana-plugin-sdk-go/backend/instancemgmt"
@@ -177,7 +178,37 @@ func (c *DefaultMongoClient) Disconnect(ctx context.Context) error {
 // Datasource implements the Grafana backend datasource interfaces.
 type Datasource struct {
 	settings DatasourceSettings
-	client   MongoClient
+
+	// mu guards lazy (re)initialization of client.
+	mu     sync.Mutex
+	client MongoClient
+	// newClient creates a MongoClient from settings. It is overridable for tests
+	// and lets ensureClient reconnect on demand if the initial connection failed.
+	newClient func(ctx context.Context, settings DatasourceSettings) (MongoClient, error)
+}
+
+// ensureClient returns a connected MongoClient, lazily establishing the
+// connection if it is not yet initialized. A transient MongoDB outage at
+// datasource-creation time (e.g. a replica set still electing a primary) must
+// not permanently break the datasource: callers invoke ensureClient on every
+// query/health/resource request so the connection is retried until it succeeds.
+func (d *Datasource) ensureClient(ctx context.Context) (MongoClient, error) {
+	d.mu.Lock()
+	defer d.mu.Unlock()
+
+	if d.client != nil {
+		return d.client, nil
+	}
+	if d.newClient == nil {
+		return nil, ErrConnectionFailed
+	}
+
+	client, err := d.newClient(ctx, d.settings)
+	if err != nil {
+		return nil, fmt.Errorf("%w: %v", ErrConnectionFailed, err)
+	}
+	d.client = client
+	return client, nil
 }
 
 // Ensure Datasource implements required interfaces.
@@ -195,15 +226,27 @@ func NewDatasource(ctx context.Context, settings backend.DataSourceInstanceSetti
 		return nil, fmt.Errorf("parsing datasource settings: %w", err)
 	}
 
-	client, err := NewDefaultMongoClient(ctx, dsSettings)
-	if err != nil {
-		log.DefaultLogger.Error("failed to create MongoDB client", "error", err)
-		// Return the datasource anyway so it can report errors via health check.
-		return &Datasource{settings: dsSettings, client: nil}, nil
+	d := &Datasource{
+		settings: dsSettings,
+		newClient: func(ctx context.Context, s DatasourceSettings) (MongoClient, error) {
+			client, err := NewDefaultMongoClient(ctx, s)
+			if err != nil {
+				return nil, err
+			}
+			return client, nil
+		},
 	}
 
-	log.DefaultLogger.Info("MongoDB datasource created", "database", dsSettings.Database)
-	return &Datasource{settings: dsSettings, client: client}, nil
+	// Attempt to connect eagerly for fast feedback, but don't treat failure as
+	// fatal: if MongoDB is briefly unavailable now, ensureClient reconnects on
+	// the next query/health check instead of leaving the datasource broken.
+	if _, err := d.ensureClient(ctx); err != nil {
+		log.DefaultLogger.Warn("initial MongoDB connection failed; will retry on demand", "error", err)
+	} else {
+		log.DefaultLogger.Info("MongoDB datasource created", "database", dsSettings.Database)
+	}
+
+	return d, nil
 }
 
 // newDatasourceWithClient creates a Datasource with an injected MongoClient (for testing).
@@ -235,21 +278,22 @@ func (d *Datasource) QueryData(ctx context.Context, req *backend.QueryDataReques
 
 // CheckHealth verifies the MongoDB connection and returns server information.
 func (d *Datasource) CheckHealth(ctx context.Context, req *backend.CheckHealthRequest) (*backend.CheckHealthResult, error) {
-	if d.client == nil {
+	client, err := d.ensureClient(ctx)
+	if err != nil {
 		return &backend.CheckHealthResult{
 			Status:  backend.HealthStatusError,
 			Message: "MongoDB client not initialized. Check connection settings.",
 		}, nil
 	}
 
-	if err := d.client.Ping(ctx); err != nil {
+	if err := client.Ping(ctx); err != nil {
 		return &backend.CheckHealthResult{
 			Status:  backend.HealthStatusError,
 			Message: fmt.Sprintf("Failed to ping MongoDB: %v", err),
 		}, nil
 	}
 
-	version, err := d.client.ServerVersion(ctx)
+	version, err := client.ServerVersion(ctx)
 	if err != nil {
 		return &backend.CheckHealthResult{
 			Status:  backend.HealthStatusError,
@@ -257,7 +301,7 @@ func (d *Datasource) CheckHealth(ctx context.Context, req *backend.CheckHealthRe
 		}, nil
 	}
 
-	rsName, _ := d.client.ReplicaSetStatus(ctx)
+	rsName, _ := client.ReplicaSetStatus(ctx)
 	message := fmt.Sprintf("MongoDB connected. Server version: %s", version)
 	if rsName != "" {
 		message += fmt.Sprintf(". Replica set: %s", rsName)
@@ -289,12 +333,13 @@ func (d *Datasource) CallResource(ctx context.Context, req *backend.CallResource
 func (d *Datasource) handleDatabases(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 
-	if d.client == nil {
+	client, err := d.ensureClient(ctx)
+	if err != nil {
 		http.Error(w, "MongoDB client not initialized", http.StatusServiceUnavailable)
 		return
 	}
 
-	databases, err := d.client.ListDatabaseNames(ctx)
+	databases, err := client.ListDatabaseNames(ctx)
 	if err != nil {
 		log.DefaultLogger.Error("failed to list databases", "error", err)
 		http.Error(w, fmt.Sprintf("failed to list databases: %v", err), http.StatusInternalServerError)
@@ -311,7 +356,8 @@ func (d *Datasource) handleDatabases(w http.ResponseWriter, r *http.Request) {
 func (d *Datasource) handleCollections(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 
-	if d.client == nil {
+	client, err := d.ensureClient(ctx)
+	if err != nil {
 		http.Error(w, "MongoDB client not initialized", http.StatusServiceUnavailable)
 		return
 	}
@@ -322,7 +368,7 @@ func (d *Datasource) handleCollections(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	collections, err := d.client.ListCollectionNames(ctx, database)
+	collections, err := client.ListCollectionNames(ctx, database)
 	if err != nil {
 		log.DefaultLogger.Error("failed to list collections", "database", database, "error", err)
 		http.Error(w, fmt.Sprintf("failed to list collections: %v", err), http.StatusInternalServerError)

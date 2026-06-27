@@ -2,6 +2,10 @@
 
 ## v0.2.0 (2026-06-27)
 
+### Fixed
+
+- Datasource now reconnects to MongoDB on demand instead of failing permanently. Previously, if MongoDB was briefly unavailable when the datasource instance was created (e.g. a replica set still electing a primary, or a transient restart), the client was left uninitialized and every query/panel reported "MongoDB client not initialized" until the datasource was re-saved. Connections are now retried lazily on each query, health check, and resource call.
+
 ### Maintenance & Compatibility
 
 - Grafana 13 support: bumped `@grafana/*` frontend packages from 12.4 to 13.1.0 (`grafanaDependency` floor kept at `>=12.3.0`, so Grafana 12 remains supported)
