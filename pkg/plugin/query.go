@@ -18,8 +18,9 @@ import (
 func (d *Datasource) query(ctx context.Context, pCtx backend.PluginContext, query backend.DataQuery) backend.DataResponse {
 	response := backend.DataResponse{}
 
-	if d.client == nil {
-		response.Error = fmt.Errorf("MongoDB client not initialized: %w", ErrConnectionFailed)
+	client, err := d.ensureClient(ctx)
+	if err != nil {
+		response.Error = fmt.Errorf("MongoDB client not initialized: %w", err)
 		return response
 	}
 
@@ -41,7 +42,7 @@ func (d *Datasource) query(ctx context.Context, pCtx backend.PluginContext, quer
 		"pipeline_stages", len(pipeline),
 	)
 
-	docs, err := d.client.Aggregate(ctx, model.Database, model.Collection, pipeline)
+	docs, err := client.Aggregate(ctx, model.Database, model.Collection, pipeline)
 	if err != nil {
 		response.Error = fmt.Errorf("%w: %v", ErrQueryFailed, err)
 		return response
