@@ -150,7 +150,7 @@ The datasource implements native **Query**-type dashboard variables, so a variab
 
 ### Builder mode
 
-Pick a **Database**, **Collection**, and **Field**. The variable is populated with the sorted distinct values of that field — no pipeline required. This is the quickest way to build a dropdown (e.g. a `sensor` picker from the `sensor` field).
+Pick a **Database**, **Collection**, and **Field**. The variable is populated with the sorted distinct values of that field — no pipeline required. This is the quickest way to build a dropdown (e.g. a `sensor` picker from the `sensor` field). The **Field** input autocompletes from the collection's inferred fields (see [Query Guide → Field-Name Autocomplete](queries.md#field-name-autocomplete)).
 
 Builder mode references the field in a collision-safe way, so naming the variable after its field (a `sensor` variable over the `sensor` field) works correctly.
 

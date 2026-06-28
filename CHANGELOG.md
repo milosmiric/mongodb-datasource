@@ -9,7 +9,7 @@
 
 ### Changed
 
-- TLS connections now negotiate a minimum of TLS 1.2.
+- TLS connections now enforce a minimum protocol version of TLS 1.2, rejecting downgrades to older, weaker versions.
 
 ## v0.2.0 (2026-06-27)
 
