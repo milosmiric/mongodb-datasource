@@ -5,7 +5,7 @@
  * field, and a raw aggregation pipeline for full control. Both reuse the same
  * database/collection pickers as the panel query editor.
  */
-import React, { ChangeEvent } from 'react';
+import React, { ChangeEvent, useEffect, useRef, useState } from 'react';
 import { QueryEditorProps, SelectableValue } from '@grafana/data';
 import { InlineField, Input, RadioButtonGroup } from '@grafana/ui';
 
@@ -45,8 +45,30 @@ export function VariableQueryEditor({ query, onChange, datasource }: Props) {
   const onModeChange = (mode: VariableEditorMode) => update({ mode });
   const onDatabaseChange = (database: string) => update({ database, collection: '' });
   const onCollectionChange = (collection: string) => update({ collection });
-  const onFieldChange = (event: ChangeEvent<HTMLInputElement>) => update({ field: event.target.value });
   const onPipelineChange = (pipeline: string) => update({ pipeline });
+
+  // The Field input is debounced: each keystroke would otherwise change the
+  // variable model and make Grafana re-run the preview query. We keep a local
+  // draft for instant typing and commit to the model after a short pause (or
+  // immediately on blur).
+  const [fieldDraft, setFieldDraft] = useState(current.field);
+  const commitTimer = useRef<ReturnType<typeof setTimeout>>();
+
+  useEffect(() => () => clearTimeout(commitTimer.current), []);
+
+  const onFieldChange = (event: ChangeEvent<HTMLInputElement>) => {
+    const value = event.target.value;
+    setFieldDraft(value);
+    clearTimeout(commitTimer.current);
+    commitTimer.current = setTimeout(() => update({ field: value }), 600);
+  };
+
+  const onFieldBlur = () => {
+    clearTimeout(commitTimer.current);
+    if (fieldDraft !== current.field) {
+      update({ field: fieldDraft });
+    }
+  };
 
   return (
     <div>
@@ -71,10 +93,11 @@ export function VariableQueryEditor({ query, onChange, datasource }: Props) {
           tooltip="Document field whose distinct values become the variable options (e.g. sensor)."
         >
           <Input
-            value={current.field}
+            value={fieldDraft}
             placeholder="sensor"
             width={30}
             onChange={onFieldChange}
+            onBlur={onFieldBlur}
           />
         </InlineField>
       ) : (

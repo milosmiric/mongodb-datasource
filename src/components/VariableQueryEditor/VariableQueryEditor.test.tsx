@@ -71,10 +71,12 @@ describe('VariableQueryEditor', () => {
     expect(defaultProps.onChange).toHaveBeenCalledWith(expect.objectContaining({ mode: 'raw' }));
   });
 
-  it('calls onChange when the field value is entered', async () => {
+  it('commits the field value to onChange on blur (debounced input)', async () => {
     const user = userEvent.setup();
     render(<VariableQueryEditor {...defaultProps} />);
-    await user.type(screen.getByPlaceholderText('sensor'), 's');
-    expect(defaultProps.onChange).toHaveBeenCalledWith(expect.objectContaining({ field: 's' }));
+    const field = screen.getByPlaceholderText('sensor');
+    await user.type(field, 'role');
+    await user.tab(); // blur flushes the debounced value immediately
+    expect(defaultProps.onChange).toHaveBeenCalledWith(expect.objectContaining({ field: 'role' }));
   });
 });
