@@ -86,9 +86,13 @@ test.describe('Dashboard variable support', () => {
     await fieldInput.fill('role');
     await fieldInput.blur();
 
-    // Running the query previews the three resolved roles in the editor.
+    // Running the query previews the resolved roles in the editor. Assert on the
+    // option chips (the heading's "(3)" count only exists on newer Grafana).
     await variableEditPage.runQuery();
-    await expect(page.getByText(/Preview of values \(3\)/)).toBeVisible({ timeout: 15000 });
+    const previewOption = page.getByTestId('data-testid Variable editor Preview of Values option');
+    for (const role of EXPECTED_ROLES) {
+      await expect(previewOption.filter({ hasText: role })).toBeVisible({ timeout: 15000 });
+    }
   });
 
   test('editor toggles between builder and raw pipeline modes', async ({ gotoVariablePage, page }) => {
