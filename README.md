@@ -23,7 +23,7 @@ The official Grafana MongoDB plugin is **Enterprise-only**. The best community a
 - Built-in macros: `$__timeFilter(field)`, `$__timeGroup(field)`, `$__oidFilter(field)`, `$__timeFilter_ms(field)`
 - Smart `$__match` stage: index-friendly multi-select and "All" handling (replaces `$regex`)
 - Native dashboard variable queries: guided builder (distinct field values) or raw pipeline
-- Field-name autocomplete in the query editors, inferred from a `$jsonSchema` validator or a document sample
+- Editor autocomplete: field names (inferred from a `$jsonSchema` validator or document sample), plus the plugin's macros, variables, and pipeline stages
 - 15+ built-in variables: time range, ObjectId, interval decomposition, panel resolution
 - Time-series and table output formats
 - Full BSON type conversion (ObjectID, Decimal128, Date, arrays, embedded docs, etc.)

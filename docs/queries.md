@@ -23,6 +23,19 @@ shows its inferred BSON type(s) — with an `· indexed` marker for indexed fiel
 The same suggestions back the **Field** input when building a [Query
 variable](#creating-variables-query-type).
 
+The editor also completes the plugin's **macros and template variables** and
+common **pipeline stages**:
+
+- Type `$__` to see the macros (`$__timeFilter`, `$__oidFilter`, `$__timeGroup`,
+  `$__match`, …) and variables (`$__from`/`$__to`, the interval/range/ObjectId
+  variables, `$__maxDataPoints`). Each lists a one-line description, and macros
+  insert a snippet with the cursor on the `field` argument.
+- Type `$` at a stage position to see stage keywords (`$match`, `$group`,
+  `$project`, `$lookup`, `$unwind`, …).
+
+All completions are hints only; field names rank first, then macros, variables,
+and stages.
+
 **How fields are inferred.** MongoDB is schemaless, so the plugin infers the
 field list per collection:
 

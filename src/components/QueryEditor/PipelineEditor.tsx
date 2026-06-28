@@ -1,15 +1,17 @@
 /**
  * PipelineEditor component for editing MongoDB aggregation pipelines.
  *
- * Uses Grafana's CodeEditor with JSON language mode for syntax highlighting and,
- * when inferred fields are supplied, registers a Monaco completion provider that
- * suggests field paths (indexed fields first, type shown as detail).
+ * Uses Grafana's CodeEditor with JSON language mode for syntax highlighting and
+ * registers a Monaco completion provider that suggests field paths (when inferred
+ * fields are supplied), the plugin's macros and template variables, and common
+ * aggregation pipeline stages.
  */
 import React, { useCallback, useEffect, useRef } from 'react';
 import { InlineField, CodeEditor, Button, type Monaco, type monacoTypes } from '@grafana/ui';
 
 import { FieldInfo } from '../../types';
 import { buildFieldCompletions } from './fieldCompletions';
+import { buildKeywordCompletions, CompletionCategory } from './keywordCompletions';
 
 /** Props for the PipelineEditor component. */
 interface PipelineEditorProps {
@@ -58,14 +60,20 @@ export function PipelineEditor({ value, onChange, fields = [] }: PipelineEditorP
         if (model !== editorRef.current?.getModel()) {
           return { suggestions: [] };
         }
-        const word = model.getWordUntilPosition(position);
+
+        // Replace the token under the cursor, including any leading `$` — so
+        // `$`-prefixed macros/variables/stages don't double the dollar sign.
+        const line = model.getLineContent(position.lineNumber);
+        const prefix = line.slice(0, position.column - 1);
+        const tokenLen = (prefix.match(/[$A-Za-z0-9_]*$/) ?? [''])[0].length;
         const range: monacoTypes.IRange = {
           startLineNumber: position.lineNumber,
           endLineNumber: position.lineNumber,
-          startColumn: word.startColumn,
-          endColumn: word.endColumn,
+          startColumn: position.column - tokenLen,
+          endColumn: position.column,
         };
-        const suggestions = buildFieldCompletions(fieldsRef.current).map((c) => ({
+
+        const fieldSuggestions = buildFieldCompletions(fieldsRef.current).map((c) => ({
           label: c.label,
           kind: monaco.languages.CompletionItemKind.Field,
           detail: c.detail,
@@ -73,7 +81,26 @@ export function PipelineEditor({ value, onChange, fields = [] }: PipelineEditorP
           sortText: c.sortText,
           range,
         }));
-        return { suggestions };
+
+        const kindFor: Record<CompletionCategory, monacoTypes.languages.CompletionItemKind> = {
+          macro: monaco.languages.CompletionItemKind.Function,
+          variable: monaco.languages.CompletionItemKind.Variable,
+          stage: monaco.languages.CompletionItemKind.Keyword,
+        };
+        const keywordSuggestions = buildKeywordCompletions().map((c) => ({
+          label: c.label,
+          kind: kindFor[c.category],
+          detail: c.detail,
+          documentation: c.documentation,
+          insertText: c.insertText,
+          insertTextRules: c.snippet
+            ? monaco.languages.CompletionItemInsertTextRule.InsertAsSnippet
+            : undefined,
+          sortText: c.sortText,
+          range,
+        }));
+
+        return { suggestions: [...fieldSuggestions, ...keywordSuggestions] };
       },
     });
   }, []);

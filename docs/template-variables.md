@@ -76,6 +76,8 @@ Useful with `$bucketAuto`:
 
 Macros are function-like constructs that expand into JSON fragments. They are processed after variable interpolation.
 
+> **Tip:** The pipeline editor autocompletes these macros and the built-in variables above — type `$__` to see them with inline descriptions. See [Query Guide → Field-Name Autocomplete](queries.md#field-name-autocomplete).
+
 ### `$__timeFilter(field)`
 
 Expands to a date range filter for BSON Date fields.
