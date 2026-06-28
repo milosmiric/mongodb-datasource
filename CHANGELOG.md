@@ -1,5 +1,11 @@
 # Changelog
 
+## v0.2.1 (2026-06-28)
+
+### Added
+
+- Native dashboard **Query**-type variables backed by MongoDB. Create a variable with a guided builder (pick a database, collection, and field to list that field's distinct values) or a raw aggregation pipeline (returning a single column, or `__text`/`__value` columns for separate label and value). Variable queries run through the normal query path, so time-range macros (`$__timeFilter`, `$__from`/`$__to`) and other dashboard variables are interpolated inside them, and they pair with the `$__match` stage for index-friendly filtering.
+
 ## v0.2.0 (2026-06-27)
 
 ### Fixed
