@@ -10,6 +10,7 @@ import { InlineField, Input } from '@grafana/ui';
 
 import { DataSource } from '../../datasource';
 import { MongoDBDataSourceOptions, MongoDBQuery, QueryFormatType } from '../../types';
+import { useFields } from '../../hooks/useFields';
 import { DatabaseSelect } from './DatabaseSelect';
 import { CollectionSelect } from './CollectionSelect';
 import { PipelineEditor } from './PipelineEditor';
@@ -25,6 +26,8 @@ type MongoDBQueryEditorProps = QueryEditorProps<DataSource, MongoDBQuery, MongoD
  * code editor, time field input, format toggle, and legend format input.
  */
 export function QueryEditor({ query, onChange, onRunQuery, datasource }: MongoDBQueryEditorProps) {
+  const { fields } = useFields(datasource, query.database ?? '', query.collection ?? '');
+
   const onDatabaseChange = (database: string) => {
     onChange({ ...query, database, collection: '' });
     onRunQuery();
@@ -72,6 +75,7 @@ export function QueryEditor({ query, onChange, onRunQuery, datasource }: MongoDB
       <PipelineEditor
         value={query.pipeline ?? '[{"$limit": 100}]'}
         onChange={onPipelineChange}
+        fields={fields}
       />
 
       <div style={{ display: 'flex', flexWrap: 'wrap', gap: '4px' }}>

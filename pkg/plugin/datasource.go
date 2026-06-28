@@ -29,6 +29,12 @@ type MongoClient interface {
 	ListCollectionNames(ctx context.Context, database string) ([]string, error)
 	// Aggregate executes an aggregation pipeline on the given database and collection.
 	Aggregate(ctx context.Context, database, collection string, pipeline interface{}) ([]bson.D, error)
+	// CollectionValidator returns the collection's validator document (containing a
+	// $jsonSchema when one is configured), or nil if the collection has none.
+	CollectionValidator(ctx context.Context, database, collection string) (bson.M, error)
+	// IndexedFields returns the set of field paths that appear in any index key on
+	// the collection. Used to rank field-name suggestions.
+	IndexedFields(ctx context.Context, database, collection string) ([]string, error)
 	// ServerVersion returns the MongoDB server version string.
 	ServerVersion(ctx context.Context) (string, error)
 	// ReplicaSetStatus returns the replica set name, or empty if not a replica set.
@@ -63,7 +69,7 @@ func BuildClientOptions(settings DatasourceSettings) (*options.ClientOptions, er
 	}
 
 	if settings.TLSEnabled {
-		tlsCfg := &tls.Config{}
+		tlsCfg := &tls.Config{MinVersion: tls.VersionTLS12}
 		if settings.TLSCACert != "" {
 			pool := x509.NewCertPool()
 			if !pool.AppendCertsFromPEM([]byte(settings.TLSCACert)) {
@@ -144,6 +150,62 @@ func (c *DefaultMongoClient) Aggregate(ctx context.Context, database, collection
 	return results, nil
 }
 
+// CollectionValidator returns the collection's validator document, or nil if the
+// collection has no validation rules. The validator (when present) typically holds
+// a $jsonSchema describing the collection's fields, which schema inference uses as
+// an authoritative fast-path that avoids sampling.
+func (c *DefaultMongoClient) CollectionValidator(ctx context.Context, database, collection string) (bson.M, error) {
+	db := c.client.Database(database)
+	specs, err := db.ListCollectionSpecifications(ctx, bson.D{{Key: "name", Value: collection}})
+	if err != nil {
+		return nil, fmt.Errorf("listing collection specification for %q: %w", collection, err)
+	}
+	if len(specs) == 0 || len(specs[0].Options) == 0 {
+		return nil, nil
+	}
+
+	var opts bson.M
+	if err := bson.Unmarshal(specs[0].Options, &opts); err != nil {
+		return nil, fmt.Errorf("decoding collection options for %q: %w", collection, err)
+	}
+	validator, ok := opts["validator"].(bson.M)
+	if !ok {
+		return nil, nil
+	}
+	return validator, nil
+}
+
+// IndexedFields returns the field paths that participate in any index on the
+// collection (including the implicit _id index). Errors are surfaced so callers
+// can treat the result as a best-effort ranking hint.
+func (c *DefaultMongoClient) IndexedFields(ctx context.Context, database, collection string) ([]string, error) {
+	coll := c.client.Database(database).Collection(collection)
+	cursor, err := coll.Indexes().List(ctx)
+	if err != nil {
+		return nil, fmt.Errorf("listing indexes for %q: %w", collection, err)
+	}
+	defer cursor.Close(ctx)
+
+	seen := map[string]struct{}{}
+	var fields []string
+	for cursor.Next(ctx) {
+		var idx struct {
+			Key bson.D `bson:"key"`
+		}
+		if err := cursor.Decode(&idx); err != nil {
+			continue
+		}
+		for _, k := range idx.Key {
+			if _, ok := seen[k.Key]; ok {
+				continue
+			}
+			seen[k.Key] = struct{}{}
+			fields = append(fields, k.Key)
+		}
+	}
+	return fields, cursor.Err()
+}
+
 // ServerVersion returns the MongoDB server version string.
 func (c *DefaultMongoClient) ServerVersion(ctx context.Context) (string, error) {
 	var result bson.M
@@ -213,8 +275,8 @@ func (d *Datasource) ensureClient(ctx context.Context) (MongoClient, error) {
 
 // Ensure Datasource implements required interfaces.
 var (
-	_ backend.QueryDataHandler    = (*Datasource)(nil)
-	_ backend.CheckHealthHandler  = (*Datasource)(nil)
+	_ backend.QueryDataHandler      = (*Datasource)(nil)
+	_ backend.CheckHealthHandler    = (*Datasource)(nil)
 	_ instancemgmt.InstanceDisposer = (*Datasource)(nil)
 )
 
@@ -318,6 +380,7 @@ func (d *Datasource) CheckHealth(ctx context.Context, req *backend.CheckHealthRe
 func (d *Datasource) RegisterRoutes(mux *http.ServeMux) {
 	mux.HandleFunc("/databases", d.handleDatabases)
 	mux.HandleFunc("/collections", d.handleCollections)
+	mux.HandleFunc("/fields", d.handleFields)
 }
 
 // CallResource handles HTTP resource requests from the frontend.
@@ -378,5 +441,41 @@ func (d *Datasource) handleCollections(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
 	if err := json.NewEncoder(w).Encode(collections); err != nil {
 		log.DefaultLogger.Error("failed to encode collections response", "error", err)
+	}
+}
+
+// handleFields responds with a JSON array of inferred field descriptors for the
+// given database and collection. Field inference is a hint for autocomplete only:
+// it never validates or blocks queries (see InferFields).
+func (d *Datasource) handleFields(w http.ResponseWriter, r *http.Request) {
+	ctx := r.Context()
+
+	client, err := d.ensureClient(ctx)
+	if err != nil {
+		http.Error(w, "MongoDB client not initialized", http.StatusServiceUnavailable)
+		return
+	}
+
+	database := r.URL.Query().Get("database")
+	if database == "" {
+		http.Error(w, "database query parameter is required", http.StatusBadRequest)
+		return
+	}
+	collection := r.URL.Query().Get("collection")
+	if collection == "" {
+		http.Error(w, "collection query parameter is required", http.StatusBadRequest)
+		return
+	}
+
+	fields, err := InferFields(ctx, client, database, collection, parseSampleSize(r.URL.Query().Get("sampleSize")))
+	if err != nil {
+		log.DefaultLogger.Error("failed to infer fields", "database", database, "collection", collection, "error", err)
+		http.Error(w, fmt.Sprintf("failed to infer fields: %v", err), http.StatusInternalServerError)
+		return
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	if err := json.NewEncoder(w).Encode(fields); err != nil {
+		log.DefaultLogger.Error("failed to encode fields response", "error", err)
 	}
 }

@@ -106,3 +106,21 @@ export type DatabaseListResponse = string[];
 
 /** CollectionListResponse is the API response from the /collections resource endpoint. */
 export type CollectionListResponse = string[];
+
+/**
+ * FieldInfo describes an inferred field path returned by the /fields resource
+ * endpoint. It is a hint for autocomplete only — never authoritative validation.
+ */
+export interface FieldInfo {
+  /** The dotted field path (e.g. `meta.region`). */
+  path: string;
+  /** The distinct BSON type names observed for the field. */
+  types: string[];
+  /** Fraction of sampled documents containing the field (1.0 for required validator fields). */
+  frequency: number;
+  /** Whether the field participates in any index. */
+  indexed: boolean;
+}
+
+/** FieldListResponse is the API response from the /fields resource endpoint. */
+export type FieldListResponse = FieldInfo[];

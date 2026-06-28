@@ -5,7 +5,7 @@
  * field, and a raw aggregation pipeline for full control. Both reuse the same
  * database/collection pickers as the panel query editor.
  */
-import React, { ChangeEvent, useEffect, useRef, useState } from 'react';
+import React, { ChangeEvent, useEffect, useId, useRef, useState } from 'react';
 import { QueryEditorProps, SelectableValue } from '@grafana/data';
 import { InlineField, Input, RadioButtonGroup } from '@grafana/ui';
 
@@ -17,6 +17,7 @@ import {
   MongoDBVariableQuery,
   VariableEditorMode,
 } from '../../types';
+import { useFields } from '../../hooks/useFields';
 import { DatabaseSelect } from '../QueryEditor/DatabaseSelect';
 import { CollectionSelect } from '../QueryEditor/CollectionSelect';
 import { PipelineEditor } from '../QueryEditor/PipelineEditor';
@@ -46,6 +47,11 @@ export function VariableQueryEditor({ query, onChange, datasource }: Props) {
   const onDatabaseChange = (database: string) => update({ database, collection: '' });
   const onCollectionChange = (collection: string) => update({ collection });
   const onPipelineChange = (pipeline: string) => update({ pipeline });
+
+  // Inferred fields drive autocomplete: a datalist on the builder Field input and
+  // Monaco completions in the raw pipeline editor.
+  const { fields } = useFields(datasource, current.database, current.collection);
+  const fieldListId = useId();
 
   // The Field input is debounced: each keystroke would otherwise change the
   // variable model and make Grafana re-run the preview query. We keep a local
@@ -87,21 +93,31 @@ export function VariableQueryEditor({ query, onChange, datasource }: Props) {
       </div>
 
       {current.mode === 'builder' ? (
-        <InlineField
-          label="Field"
-          labelWidth={14}
-          tooltip="Document field whose distinct values become the variable options (e.g. sensor)."
-        >
-          <Input
-            value={fieldDraft}
-            placeholder="sensor"
-            width={30}
-            onChange={onFieldChange}
-            onBlur={onFieldBlur}
-          />
-        </InlineField>
+        <>
+          <InlineField
+            label="Field"
+            labelWidth={14}
+            tooltip="Document field whose distinct values become the variable options (e.g. sensor). Suggestions come from the selected collection."
+          >
+            <Input
+              value={fieldDraft}
+              placeholder="sensor"
+              width={30}
+              list={fields.length > 0 ? fieldListId : undefined}
+              onChange={onFieldChange}
+              onBlur={onFieldBlur}
+            />
+          </InlineField>
+          {fields.length > 0 && (
+            <datalist id={fieldListId} data-testid="mongodb-field-suggestions">
+              {fields.map((field) => (
+                <option key={field.path} value={field.path} />
+              ))}
+            </datalist>
+          )}
+        </>
       ) : (
-        <PipelineEditor value={current.pipeline} onChange={onPipelineChange} />
+        <PipelineEditor value={current.pipeline} onChange={onPipelineChange} fields={fields} />
       )}
     </div>
   );
