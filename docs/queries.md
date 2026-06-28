@@ -170,6 +170,21 @@ You can also use `$__interval_ms` directly for manual bucketing, or `$__interval
 ]
 ```
 
+### Creating Variables (Query type)
+
+The datasource supports native **Query**-type dashboard variables. In **Dashboard
+settings → Variables → New variable → Query**, select this datasource and choose a mode:
+
+- **Builder** — pick a database, collection, and a field. The variable is populated with the
+  distinct values of that field (sorted). No pipeline required.
+- **Raw pipeline** — write an aggregation pipeline for full control. Return either a single
+  column, or `__text`/`__value` columns to use different labels and values (see
+  [Distinct Values](#distinct-values)).
+
+Variable queries run through the normal query path, so time-range macros
+(`$__timeFilter`, `$__from`/`$__to`) and other dashboard variables are interpolated inside
+them. Pair the resulting variable with `$__match` (below) to filter panels.
+
 ### Dashboard Variables
 
 Grafana dashboard template variables (e.g., `$sensor`, `$location`) are replaced by the frontend before the query is sent to the backend.
@@ -214,7 +229,9 @@ For simple string matching without multi-select:
 
 ### Distinct Values
 
-Useful for populating dashboard variable dropdowns:
+Useful for populating dashboard variable dropdowns. The **Builder** mode of a Query variable
+(see [Creating Variables](#creating-variables-query-type)) generates this for you; use the raw
+form when you need a custom label/value or extra filtering:
 
 ```json
 [
@@ -223,6 +240,10 @@ Useful for populating dashboard variable dropdowns:
   { "$project": { "_id": 0, "__text": "$_id", "__value": "$_id" } }
 ]
 ```
+
+`__text` is the label shown in the dropdown and `__value` is the value substituted into
+queries. Project them to different fields when they should differ; a single column is used
+for both.
 
 ### Joining Collections with `$lookup`
 

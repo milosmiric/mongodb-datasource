@@ -36,6 +36,38 @@ export const DEFAULT_QUERY: Partial<MongoDBQuery> = {
   legendFormat: '',
 };
 
+/** VariableEditorMode selects how a dashboard variable query is authored. */
+export type VariableEditorMode = 'builder' | 'raw';
+
+/**
+ * MongoDBVariableQuery represents a dashboard template-variable query.
+ *
+ * In `builder` mode the options come from the distinct values of `field` in
+ * `collection`. In `raw` mode the user supplies an aggregation `pipeline` that
+ * returns either `__text`/`__value` columns or a single column.
+ */
+export interface MongoDBVariableQuery extends DataQuery {
+  /** Whether the query is authored via the guided builder or a raw pipeline. */
+  mode: VariableEditorMode;
+  /** The MongoDB database to query. */
+  database: string;
+  /** The MongoDB collection to query. */
+  collection: string;
+  /** The field whose distinct values populate the variable (builder mode). */
+  field: string;
+  /** The raw JSON aggregation pipeline (raw mode). */
+  pipeline: string;
+}
+
+/** Default values for a new variable query. */
+export const DEFAULT_VARIABLE_QUERY: Partial<MongoDBVariableQuery> = {
+  mode: 'builder',
+  database: '',
+  collection: '',
+  field: '',
+  pipeline: '',
+};
+
 /** MongoDBDataSourceOptions holds the JSON configuration for the datasource. */
 export interface MongoDBDataSourceOptions extends DataSourceJsonData {
   /** The MongoDB connection string URI. */
