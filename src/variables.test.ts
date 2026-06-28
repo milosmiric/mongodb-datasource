@@ -7,10 +7,16 @@ describe('buildVariablePipeline', () => {
   it('generates a distinct-values pipeline projected to __text/__value', () => {
     const pipeline = JSON.parse(buildVariablePipeline('sensor'));
     expect(pipeline).toEqual([
-      { $group: { _id: '$sensor' } },
+      { $group: { _id: { $getField: 'sensor' } } },
       { $sort: { _id: 1 } },
       { $project: { _id: 0, __text: '$_id', __value: '$_id' } },
     ]);
+  });
+
+  it('references the field via $getField so it survives variable interpolation', () => {
+    // A variable named after its field (e.g. `role` over `role`) must not be
+    // clobbered by templateSrv.replace — so no bare `$role` token may appear.
+    expect(buildVariablePipeline('role')).not.toContain('$role');
   });
 });
 

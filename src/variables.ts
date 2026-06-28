@@ -8,10 +8,12 @@
  * macros ($__timeFilter, $__from/$__to) and $__match handling.
  */
 import {
+  createDataFrame,
   CustomVariableSupport,
   DataFrame,
   DataQueryRequest,
   DataQueryResponse,
+  FieldType,
   MetricFindValue,
 } from '@grafana/data';
 import { Observable, of } from 'rxjs';
@@ -29,11 +31,15 @@ const TEXT_FIELD_NAMES = ['__text', 'text'];
 /**
  * buildVariablePipeline generates an aggregation pipeline returning the distinct
  * values of `field`, projected into the __text/__value convention.
+ *
+ * The field is referenced via `$getField` (a string literal) rather than
+ * `$field`, so a dashboard variable whose name matches the field (e.g. a `role`
+ * variable over the `role` field) isn't clobbered by Grafana's template
+ * interpolation before the query reaches the backend.
  */
 export function buildVariablePipeline(field: string): string {
-  const fieldRef = `$${field}`;
   return JSON.stringify([
-    { $group: { _id: fieldRef } },
+    { $group: { _id: { $getField: field } } },
     { $sort: { _id: 1 } },
     { $project: { _id: 0, __text: '$_id', __value: '$_id' } },
   ]);
@@ -129,12 +135,30 @@ export class MongoVariableSupport extends CustomVariableSupport<DataSource, Mong
     } as unknown as DataQueryRequest<MongoDBQuery>;
 
     // datasource.query() applies template variables and time-range macros, then
-    // hits the backend; we map the resulting frames into variable options.
+    // hits the backend; we normalise the resulting frames into a text/value
+    // frame, the shape Grafana's variable runner reads option labels/values from.
     return this.datasource.query(dsRequest).pipe(
       map((response) => ({
         ...response,
-        data: framesToMetricFindValues(response.data),
+        data: [metricFindValuesToFrame(framesToMetricFindValues(response.data))],
       }))
     );
   }
+}
+
+/**
+ * metricFindValuesToFrame builds a DataFrame with `text` and `value` columns,
+ * the convention Grafana's variable system uses to extract option labels/values.
+ */
+function metricFindValuesToFrame(values: MetricFindValue[]): DataFrame {
+  return createDataFrame({
+    fields: [
+      { name: 'text', type: FieldType.string, values: values.map((v) => String(v.text)) },
+      {
+        name: 'value',
+        type: FieldType.string,
+        values: values.map((v) => String(v.value ?? v.text)),
+      },
+    ],
+  });
 }
