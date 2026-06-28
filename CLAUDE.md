@@ -26,6 +26,13 @@ Open-source Grafana datasource plugin for MongoDB. Plugin ID: `milosmiric-mongod
 
 **npm only.** No bun, yarn, or pnpm. All commands use `npm` or `npx`.
 
+## Scratch Directory
+
+Use `.tmp/` (repo root) for transient/working files — scratch notes, intermediate
+output, local experiments. Its contents are gitignored (`.tmp/*`, except `.tmp/.gitkeep`),
+so nothing in it is committed. Prefer it over scattering throwaway files in the tree or
+writing to system temp dirs.
+
 ## Ports
 
 - Grafana: **3105** (not 3000)
