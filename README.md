@@ -38,7 +38,7 @@ The official Grafana MongoDB plugin is **Enterprise-only**. The best community a
 ![Dashboard - Orders & BSON Types](https://raw.githubusercontent.com/milosmiric/mongodb-datasource/main/src/img/dashboard-2.png)
 
 ### Query Editor — Field-Name Autocomplete
-![Query Editor - Field-Name Autocomplete](https://raw.githubusercontent.com/milosmiric/mongodb-datasource/main/src/img/field-name-auto-complete.png)
+![Query Editor - Field-Name Autocomplete](src/img/field-name-auto-complete.png)
 
 ### Configuration
 ![Config Editor](https://raw.githubusercontent.com/milosmiric/mongodb-datasource/main/src/img/add-connection.png)
