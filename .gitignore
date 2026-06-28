@@ -46,6 +46,10 @@ ci/
 # macOS
 .DS_Store
 
+# Scratch / transient working files (keep the dir, ignore its contents)
+.tmp/*
+!.tmp/.gitkeep
+
 .eslintcache
 
 # TLS certs (generated)
