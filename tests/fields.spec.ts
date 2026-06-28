@@ -75,3 +75,44 @@ test.describe('Field autocomplete', () => {
     }).toPass({ timeout: 15000 });
   });
 });
+
+test.describe('Macro & stage completion', () => {
+  // Macro/variable/stage completions are static — they work without selecting a
+  // collection, so these tests only need the panel editor open.
+  async function typeAndTriggerSuggest(page: import('@playwright/test').Page, text: string) {
+    const pipelineEditor = page.getByTestId('mongodb-pipeline-editor');
+    const editor = pipelineEditor.locator('.monaco-editor').first();
+    await editor.click({ force: true });
+    const modifier = process.platform === 'darwin' ? 'Meta' : 'Control';
+    await page.keyboard.press(`${modifier}+a`);
+    await page.keyboard.type(text, { delay: 10 });
+  }
+
+  test('suggests the plugin macros when typing $__', async ({ panelEditPage, page }) => {
+    await panelEditPage.datasource.set('MongoDB');
+    await panelEditPage.setVisualization('Table');
+
+    await typeAndTriggerSuggest(page, '[{"$match":{$__tim');
+
+    await expect(async () => {
+      await page.keyboard.press('Control+Space');
+      const suggest = page.locator('.monaco-editor .suggest-widget');
+      await expect(suggest).toBeVisible({ timeout: 2000 });
+      await expect(suggest).toContainText('$__timeFilter', { timeout: 2000 });
+    }).toPass({ timeout: 15000 });
+  });
+
+  test('suggests pipeline stage keywords', async ({ panelEditPage, page }) => {
+    await panelEditPage.datasource.set('MongoDB');
+    await panelEditPage.setVisualization('Table');
+
+    await typeAndTriggerSuggest(page, '[{"$grou');
+
+    await expect(async () => {
+      await page.keyboard.press('Control+Space');
+      const suggest = page.locator('.monaco-editor .suggest-widget');
+      await expect(suggest).toBeVisible({ timeout: 2000 });
+      await expect(suggest).toContainText('$group', { timeout: 2000 });
+    }).toPass({ timeout: 15000 });
+  });
+});
