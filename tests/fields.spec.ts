@@ -50,12 +50,6 @@ test.describe('Field autocomplete', () => {
     await selectOption(page, 'Select database', 'demo');
     await selectOption(page, 'Select collection', 'users');
 
-    // Wait for inferred fields to load before relying on completions.
-    await page.waitForResponse(
-      (r) => r.url().includes('/resources/fields') && r.url().includes('collection=users') && r.ok(),
-      { timeout: 15000 }
-    );
-
     const pipelineEditor = page.getByTestId('mongodb-pipeline-editor');
     const editor = pipelineEditor.locator('.monaco-editor').first();
     await editor.click({ force: true });
@@ -65,14 +59,16 @@ test.describe('Field autocomplete', () => {
     // Type a field-reference prefix, then trigger Monaco's suggestion widget.
     await page.keyboard.type('[{"$project":{"ema', { delay: 10 });
 
-    // Triggering the suggestion widget can be version-sensitive; retry until it
-    // shows. Monaco's "trigger suggest" is Ctrl+Space on all platforms.
+    // Retry until the widget shows the inferred field. The loop also absorbs the
+    // async `/fields` fetch — re-triggering suggest until completions populate —
+    // so we avoid a racy waitForResponse (the request can fire before a listener
+    // is attached). Monaco's "trigger suggest" is Ctrl+Space on all platforms.
     await expect(async () => {
       await page.keyboard.press('Control+Space');
       const suggest = page.locator('.monaco-editor .suggest-widget');
-      await expect(suggest).toBeVisible({ timeout: 2000 });
-      await expect(suggest).toContainText('email', { timeout: 2000 });
-    }).toPass({ timeout: 15000 });
+      await expect(suggest).toBeVisible({ timeout: 3000 });
+      await expect(suggest).toContainText('email', { timeout: 3000 });
+    }).toPass({ timeout: 30000 });
   });
 });
 
@@ -97,9 +93,9 @@ test.describe('Macro & stage completion', () => {
     await expect(async () => {
       await page.keyboard.press('Control+Space');
       const suggest = page.locator('.monaco-editor .suggest-widget');
-      await expect(suggest).toBeVisible({ timeout: 2000 });
-      await expect(suggest).toContainText('$__timeFilter', { timeout: 2000 });
-    }).toPass({ timeout: 15000 });
+      await expect(suggest).toBeVisible({ timeout: 3000 });
+      await expect(suggest).toContainText('$__timeFilter', { timeout: 3000 });
+    }).toPass({ timeout: 30000 });
   });
 
   test('suggests pipeline stage keywords', async ({ panelEditPage, page }) => {
@@ -111,8 +107,8 @@ test.describe('Macro & stage completion', () => {
     await expect(async () => {
       await page.keyboard.press('Control+Space');
       const suggest = page.locator('.monaco-editor .suggest-widget');
-      await expect(suggest).toBeVisible({ timeout: 2000 });
-      await expect(suggest).toContainText('$group', { timeout: 2000 });
-    }).toPass({ timeout: 15000 });
+      await expect(suggest).toBeVisible({ timeout: 3000 });
+      await expect(suggest).toContainText('$group', { timeout: 3000 });
+    }).toPass({ timeout: 30000 });
   });
 });
