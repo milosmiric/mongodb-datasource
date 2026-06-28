@@ -71,7 +71,7 @@ test.describe('Dashboard variable support', () => {
     await expect(panel).not.toContainText('editor');
   });
 
-  test('variable editor exposes builder and raw modes', async ({ gotoVariablePage, page }) => {
+  test('builder editor runs a query and previews the resolved values', async ({ gotoVariablePage, page }) => {
     const variablePage = await gotoVariablePage({});
     const variableEditPage = await variablePage.clickAddNew();
     await variableEditPage.setVariableType('Query');
@@ -81,6 +81,23 @@ test.describe('Dashboard variable support', () => {
     await expect(page.getByText('Mode', { exact: true })).toBeVisible();
     await selectOption(page, 'Select database', 'demo');
     await selectOption(page, 'Select collection', 'users');
+    const fieldInput = page.getByPlaceholder('sensor');
+    await expect(fieldInput).toBeVisible();
+    await fieldInput.fill('role');
+    await fieldInput.blur();
+
+    // Running the query previews the three resolved roles in the editor.
+    await variableEditPage.runQuery();
+    await expect(page.getByText(/Preview of values \(3\)/)).toBeVisible({ timeout: 15000 });
+  });
+
+  test('editor toggles between builder and raw pipeline modes', async ({ gotoVariablePage, page }) => {
+    const variablePage = await gotoVariablePage({});
+    const variableEditPage = await variablePage.clickAddNew();
+    await variableEditPage.setVariableType('Query');
+    await variableEditPage.datasource.set('MongoDB');
+
+    // Builder mode (default) shows the field input.
     await expect(page.getByPlaceholder('sensor')).toBeVisible();
 
     // Switching to raw mode reveals the pipeline editor instead.

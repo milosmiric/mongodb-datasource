@@ -55,7 +55,10 @@ export function variableQueryToMongoQuery(variableQuery: MongoDBVariableQuery): 
     variableQuery.mode === 'raw' ? variableQuery.pipeline : buildVariablePipeline(variableQuery.field);
 
   return {
-    refId: variableQuery.refId,
+    // Variable queries created in the editor have no refId; default it so the
+    // backend's response (keyed by "A") maps back onto this target instead of
+    // being dropped by toDataQueryResponse.
+    refId: variableQuery.refId || 'A',
     database: variableQuery.database,
     collection: variableQuery.collection,
     pipeline,

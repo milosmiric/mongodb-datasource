@@ -33,19 +33,19 @@ const MODE_OPTIONS: Array<SelectableValue<VariableEditorMode>> = [
  * VariableQueryEditor renders the editor shown for Query-type dashboard
  * variables that use the MongoDB datasource.
  */
-export function VariableQueryEditor({ query, onChange, onRunQuery, datasource }: Props) {
+export function VariableQueryEditor({ query, onChange, datasource }: Props) {
   // Grafana may pass a bare { refId } on first render; fill in defaults.
   const current: MongoDBVariableQuery = { ...DEFAULT_VARIABLE_QUERY, ...query } as MongoDBVariableQuery;
 
-  const update = (patch: Partial<MongoDBVariableQuery>) => {
-    onChange({ ...current, ...patch });
-    onRunQuery();
-  };
+  // Only update the variable model here; the query is run by Grafana's "Run
+  // query" button (and on dashboard load). Calling onRunQuery() on every change
+  // races the model commit and fires queries with a stale/empty collection.
+  const update = (patch: Partial<MongoDBVariableQuery>) => onChange({ ...current, ...patch });
 
   const onModeChange = (mode: VariableEditorMode) => update({ mode });
   const onDatabaseChange = (database: string) => update({ database, collection: '' });
   const onCollectionChange = (collection: string) => update({ collection });
-  const onFieldChange = (event: ChangeEvent<HTMLInputElement>) => onChange({ ...current, field: event.target.value });
+  const onFieldChange = (event: ChangeEvent<HTMLInputElement>) => update({ field: event.target.value });
   const onPipelineChange = (pipeline: string) => update({ pipeline });
 
   return (
@@ -75,7 +75,6 @@ export function VariableQueryEditor({ query, onChange, onRunQuery, datasource }:
             placeholder="sensor"
             width={30}
             onChange={onFieldChange}
-            onBlur={onRunQuery}
           />
         </InlineField>
       ) : (

@@ -43,6 +43,11 @@ describe('variableQueryToMongoQuery', () => {
     const q = variableQueryToMongoQuery({ ...base, mode: 'raw', pipeline: raw });
     expect(q.pipeline).toBe(raw);
   });
+
+  it('defaults a missing refId to "A" so the backend response maps back', () => {
+    const q = variableQueryToMongoQuery({ ...base, refId: '' });
+    expect(q.refId).toBe('A');
+  });
 });
 
 describe('framesToMetricFindValues', () => {
