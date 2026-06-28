@@ -51,8 +51,10 @@ export default defineConfig<PluginOptions>({
 | `queryExecution.spec.ts` | 9 | Table/time-series queries, macros, errors, empty states |
 | `dashboards.spec.ts` | 22 | Sample dashboard panels, template variables, scrolling |
 | `authMechanisms.spec.ts` | 8 | SCRAM-SHA-256/1, X.509, wrong password, API queries |
+| `variables.spec.ts` | 5 | Query-variable editor (builder/raw) and resolution on a dashboard |
+| `fields.spec.ts` | 5 | Field-autocomplete `/fields` endpoint + field/macro/stage Monaco completions |
 
-**Total: 49 E2E tests** — verified across Grafana 12.3, 12.4, and 13.0.
+**Total: 59 E2E tests** — verified across Grafana 12.3, 12.4, 13.0, and 13.1.
 
 ## Helpers (`tests/helpers.ts`)
 

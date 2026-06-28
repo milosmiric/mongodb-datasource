@@ -13,6 +13,46 @@ The query editor has the following fields:
 - **Time Field** — (Time series only) Which document field contains timestamps
 - **Legend** — (Time series only) Legend format template, e.g. `{{sensor}}`
 
+## Field-Name Autocomplete
+
+Once you select a database and collection, the pipeline editor suggests field
+names as you type. Press `Ctrl+Space` (or just start typing a field reference) to
+open the suggestion list. Indexed fields are ranked first, and each suggestion
+shows its inferred BSON type(s) — with an `· indexed` marker for indexed fields.
+
+The same suggestions back the **Field** input when building a [Query
+variable](#creating-variables-query-type).
+
+The editor also completes the plugin's **macros and template variables** and
+common **pipeline stages**:
+
+- Type `$__` to see the macros (`$__timeFilter`, `$__oidFilter`, `$__timeGroup`,
+  `$__match`, …) and variables (`$__from`/`$__to`, the interval/range/ObjectId
+  variables, `$__maxDataPoints`). Each lists a one-line description, and macros
+  insert a snippet with the cursor on the `field` argument.
+- Type `$` at a stage position to see stage keywords (`$match`, `$group`,
+  `$project`, `$lookup`, `$unwind`, …).
+
+All completions are hints only; field names rank first, then macros, variables,
+and stages.
+
+**How fields are inferred.** MongoDB is schemaless, so the plugin infers the
+field list per collection:
+
+- If the collection has a [`$jsonSchema`
+  validator](https://www.mongodb.com/docs/manual/core/schema-validation/), its
+  declared fields and types are used directly (no sampling).
+- Otherwise the backend runs a bounded
+  [`$sample`](https://www.mongodb.com/docs/manual/reference/operator/aggregation/sample/)
+  over the collection and walks the returned documents, collecting the union of
+  field paths (including nested, dotted paths like `meta.region` and fields inside
+  arrays of objects) and their observed types.
+
+Because sampling is partial, suggestions are **hints only** — they never validate
+or block a query. A field that isn't suggested (e.g. it only appears in rarely
+sampled documents) can still be used normally. Sample size and the number of
+returned fields are bounded so inference stays cheap on large collections.
+
 ## Aggregation Pipeline Basics
 
 Queries are written as MongoDB [aggregation pipelines](https://www.mongodb.com/docs/manual/core/aggregation-pipeline/) — a JSON array of stage objects. Each stage transforms the data flowing through the pipeline.
@@ -170,6 +210,22 @@ You can also use `$__interval_ms` directly for manual bucketing, or `$__interval
 ]
 ```
 
+### Creating Variables (Query type)
+
+The datasource supports native **Query**-type dashboard variables. In **Dashboard
+settings → Variables → New variable → Query**, select this datasource and choose a mode:
+
+- **Builder** — pick a database, collection, and a field. The variable is populated with the
+  distinct values of that field (sorted). No pipeline required. The **Field** input
+  autocompletes from the collection's [inferred fields](#field-name-autocomplete).
+- **Raw pipeline** — write an aggregation pipeline for full control. Return either a single
+  column, or `__text`/`__value` columns to use different labels and values (see
+  [Distinct Values](#distinct-values)).
+
+Variable queries run through the normal query path, so time-range macros
+(`$__timeFilter`, `$__from`/`$__to`) and other dashboard variables are interpolated inside
+them. Pair the resulting variable with `$__match` (below) to filter panels.
+
 ### Dashboard Variables
 
 Grafana dashboard template variables (e.g., `$sensor`, `$location`) are replaced by the frontend before the query is sent to the backend.
@@ -214,7 +270,9 @@ For simple string matching without multi-select:
 
 ### Distinct Values
 
-Useful for populating dashboard variable dropdowns:
+Useful for populating dashboard variable dropdowns. The **Builder** mode of a Query variable
+(see [Creating Variables](#creating-variables-query-type)) generates this for you; use the raw
+form when you need a custom label/value or extra filtering:
 
 ```json
 [
@@ -223,6 +281,10 @@ Useful for populating dashboard variable dropdowns:
   { "$project": { "_id": 0, "__text": "$_id", "__value": "$_id" } }
 ]
 ```
+
+`__text` is the label shown in the dropdown and `__value` is the value substituted into
+queries. Project them to different fields when they should differ; a single column is used
+for both.
 
 ### Joining Collections with `$lookup`
 

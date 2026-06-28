@@ -21,6 +21,10 @@ type mockMongoClient struct {
 	collErr       error
 	aggregateData []bson.D
 	aggregateErr  error
+	validator     bson.M
+	validatorErr  error
+	indexedFields []string
+	indexErr      error
 	serverVersion string
 	versionErr    error
 	replicaSet    string
@@ -42,6 +46,14 @@ func (m *mockMongoClient) ListCollectionNames(_ context.Context, _ string) ([]st
 
 func (m *mockMongoClient) Aggregate(_ context.Context, _, _ string, _ interface{}) ([]bson.D, error) {
 	return m.aggregateData, m.aggregateErr
+}
+
+func (m *mockMongoClient) CollectionValidator(_ context.Context, _, _ string) (bson.M, error) {
+	return m.validator, m.validatorErr
+}
+
+func (m *mockMongoClient) IndexedFields(_ context.Context, _, _ string) ([]string, error) {
+	return m.indexedFields, m.indexErr
 }
 
 func (m *mockMongoClient) ServerVersion(_ context.Context) (string, error) {
@@ -250,7 +262,7 @@ func TestInterpolateVariables(t *testing.T) {
 			expect: `{"n": 100}`,
 		},
 		{
-			name: "replaces $__maxDataPoints custom",
+			name:  "replaces $__maxDataPoints custom",
 			input: `{"n": $__maxDataPoints}`,
 			query: backend.DataQuery{
 				TimeRange:     tr,

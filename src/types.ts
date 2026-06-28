@@ -36,6 +36,38 @@ export const DEFAULT_QUERY: Partial<MongoDBQuery> = {
   legendFormat: '',
 };
 
+/** VariableEditorMode selects how a dashboard variable query is authored. */
+export type VariableEditorMode = 'builder' | 'raw';
+
+/**
+ * MongoDBVariableQuery represents a dashboard template-variable query.
+ *
+ * In `builder` mode the options come from the distinct values of `field` in
+ * `collection`. In `raw` mode the user supplies an aggregation `pipeline` that
+ * returns either `__text`/`__value` columns or a single column.
+ */
+export interface MongoDBVariableQuery extends DataQuery {
+  /** Whether the query is authored via the guided builder or a raw pipeline. */
+  mode: VariableEditorMode;
+  /** The MongoDB database to query. */
+  database: string;
+  /** The MongoDB collection to query. */
+  collection: string;
+  /** The field whose distinct values populate the variable (builder mode). */
+  field: string;
+  /** The raw JSON aggregation pipeline (raw mode). */
+  pipeline: string;
+}
+
+/** Default values for a new variable query. */
+export const DEFAULT_VARIABLE_QUERY: Partial<MongoDBVariableQuery> = {
+  mode: 'builder',
+  database: '',
+  collection: '',
+  field: '',
+  pipeline: '',
+};
+
 /** MongoDBDataSourceOptions holds the JSON configuration for the datasource. */
 export interface MongoDBDataSourceOptions extends DataSourceJsonData {
   /** The MongoDB connection string URI. */
@@ -74,3 +106,21 @@ export type DatabaseListResponse = string[];
 
 /** CollectionListResponse is the API response from the /collections resource endpoint. */
 export type CollectionListResponse = string[];
+
+/**
+ * FieldInfo describes an inferred field path returned by the /fields resource
+ * endpoint. It is a hint for autocomplete only — never authoritative validation.
+ */
+export interface FieldInfo {
+  /** The dotted field path (e.g. `meta.region`). */
+  path: string;
+  /** The distinct BSON type names observed for the field. */
+  types: string[];
+  /** Fraction of sampled documents containing the field (1.0 for required validator fields). */
+  frequency: number;
+  /** Whether the field participates in any index. */
+  indexed: boolean;
+}
+
+/** FieldListResponse is the API response from the /fields resource endpoint. */
+export type FieldListResponse = FieldInfo[];

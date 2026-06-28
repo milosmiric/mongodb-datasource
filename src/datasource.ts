@@ -8,11 +8,14 @@ import { CoreApp, DataSourceInstanceSettings } from '@grafana/data';
 import { DataSourceWithBackend, getTemplateSrv } from '@grafana/runtime';
 
 import { MongoDBDataSourceOptions, MongoDBQuery, DEFAULT_QUERY } from './types';
+import { MongoVariableSupport } from './variables';
 
 /** DataSource handles communication between Grafana and the MongoDB backend plugin. */
 export class DataSource extends DataSourceWithBackend<MongoDBQuery, MongoDBDataSourceOptions> {
   constructor(instanceSettings: DataSourceInstanceSettings<MongoDBDataSourceOptions>) {
     super(instanceSettings);
+    // Enable Query-type dashboard variables backed by MongoDB.
+    this.variables = new MongoVariableSupport(this);
   }
 
   /** getDefaultQuery returns default values for new queries. */

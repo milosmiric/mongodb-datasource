@@ -1,0 +1,70 @@
+{
+  "uid": "mongodb-variables",
+  "title": "MongoDB Variables Test",
+  "schemaVersion": 39,
+  "version": 1,
+  "tags": ["mongodb", "e2e"],
+  "time": { "from": "now-6h", "to": "now" },
+  "templating": {
+    "list": [
+      {
+        "name": "selrole",
+        "label": "Role",
+        "type": "query",
+        "datasource": { "type": "milosmiric-mongodb-datasource", "uid": "mongodb-demo" },
+        "query": {
+          "refId": "role-var",
+          "mode": "builder",
+          "database": "demo",
+          "collection": "users",
+          "field": "role",
+          "pipeline": ""
+        },
+        "refresh": 1,
+        "sort": 1,
+        "includeAll": true,
+        "allValue": "$__all",
+        "multi": true,
+        "current": {}
+      },
+      {
+        "name": "selrole_raw",
+        "label": "Role (raw)",
+        "type": "query",
+        "datasource": { "type": "milosmiric-mongodb-datasource", "uid": "mongodb-demo" },
+        "query": {
+          "refId": "role-raw-var",
+          "mode": "raw",
+          "database": "demo",
+          "collection": "users",
+          "field": "",
+          "pipeline": "[{\"$group\": {\"_id\": \"$role\"}}, {\"$sort\": {\"_id\": 1}}, {\"$project\": {\"_id\": 0, \"__text\": \"$_id\", \"__value\": \"$_id\"}}]"
+        },
+        "refresh": 1,
+        "sort": 1,
+        "includeAll": false,
+        "multi": false,
+        "current": {}
+      }
+    ]
+  },
+  "panels": [
+    {
+      "id": 1,
+      "title": "Users by role",
+      "type": "table",
+      "datasource": { "type": "milosmiric-mongodb-datasource", "uid": "mongodb-demo" },
+      "gridPos": { "h": 8, "w": 12, "x": 0, "y": 0 },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": { "type": "milosmiric-mongodb-datasource", "uid": "mongodb-demo" },
+          "database": "demo",
+          "collection": "users",
+          "format": "table",
+          "pipeline": "[{\"$__match\": {\"role\": ${selrole:json}}}, {\"$group\": {\"_id\": \"$role\", \"count\": {\"$sum\": 1}}}, {\"$project\": {\"_id\": 0, \"role\": \"$_id\", \"count\": 1}}, {\"$sort\": {\"role\": 1}}]"
+        }
+      ]
+    }
+  ]
+}

@@ -76,6 +76,8 @@ Useful with `$bucketAuto`:
 
 Macros are function-like constructs that expand into JSON fragments. They are processed after variable interpolation.
 
+> **Tip:** The pipeline editor autocompletes these macros and the built-in variables above — type `$__` to see them with inline descriptions. See [Query Guide → Field-Name Autocomplete](queries.md#field-name-autocomplete).
+
 ### `$__timeFilter(field)`
 
 Expands to a date range filter for BSON Date fields.
@@ -141,6 +143,37 @@ Expands to a `$dateTrunc` expression for adaptive time bucketing. The unit and b
 ```json
 {"$dateTrunc": {"date": "$timestamp", "unit": "hour", "binSize": 2}}
 ```
+
+---
+
+## Creating Query Variables
+
+The datasource implements native **Query**-type dashboard variables, so a variable's options can be populated from MongoDB. In **Dashboard settings → Variables → New variable**, set **Type** to **Query** and select this datasource. Two modes are available:
+
+### Builder mode
+
+Pick a **Database**, **Collection**, and **Field**. The variable is populated with the sorted distinct values of that field — no pipeline required. This is the quickest way to build a dropdown (e.g. a `sensor` picker from the `sensor` field). The **Field** input autocompletes from the collection's inferred fields (see [Query Guide → Field-Name Autocomplete](queries.md#field-name-autocomplete)).
+
+Builder mode references the field in a collision-safe way, so naming the variable after its field (a `sensor` variable over the `sensor` field) works correctly.
+
+### Raw pipeline mode
+
+Write an aggregation pipeline for full control. Return either:
+
+- a **single column**, used as both the option label and value, or
+- **`__text`** and **`__value`** columns, to show a different label from the submitted value.
+
+```json
+[
+  {"$group": {"_id": "$sensor"}},
+  {"$sort": {"_id": 1}},
+  {"$project": {"_id": 0, "__text": "$_id", "__value": "$_id"}}
+]
+```
+
+Variable queries run through the normal query path, so time-range macros (`$__timeFilter`, `$__from`/`$__to`) and other dashboard variables are interpolated inside them.
+
+Pair the resulting variable with [`$__match`](#smart-match-__match) to filter panels — set **All value** to `$__all` and reference it as `${varName:json}`.
 
 ---
 
@@ -219,7 +252,9 @@ Variable config change:
 
 ### Variable Naming
 
-Avoid naming variables with a leading `$` that collides with MongoDB field references. For example, don't name a variable `field` if your documents have a field called `field` — the `$field` in an aggregation expression would be ambiguous.
+Avoid naming variables so they collide with a MongoDB field reference used in the **same pipeline**. Grafana interpolates `$name`/`${name}` before the query reaches the backend, so if a variable is named `sensor` and the pipeline contains `$sensor` as a field reference, that reference is replaced by the variable's value. This applies to panel pipelines and **raw-mode** variable queries.
+
+Builder-mode variables are exempt — they reference the field via `$getField` (a string literal), so naming a builder variable after its field is safe.
 
 ### Format Specifiers
 

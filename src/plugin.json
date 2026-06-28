@@ -57,12 +57,16 @@
         "path": "img/dashboard-2.png"
       },
       {
+        "name": "Query Editor — Field-Name Autocomplete",
+        "path": "img/field-name-auto-complete.png"
+      },
+      {
         "name": "Configuration",
         "path": "img/add-connection.png"
       }
     ],
-    "version": "0.2.0",
-    "updated": "2026-06-27"
+    "version": "0.3.0",
+    "updated": "2026-06-28"
   },
   "dependencies": {
     "grafanaDependency": ">=12.3.0",
