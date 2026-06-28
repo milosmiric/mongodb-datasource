@@ -21,6 +21,14 @@ jest.mock('../../hooks/useCollections', () => ({
   useCollections: () => ({ collections: ['sensors'], loading: false, error: null }),
 }));
 
+jest.mock('../../hooks/useFields', () => ({
+  useFields: () => ({
+    fields: [{ path: 'sensor', types: ['string'], frequency: 1, indexed: true }],
+    loading: false,
+    error: null,
+  }),
+}));
+
 const mockDatasource = { uid: 'test-uid' } as DataSource;
 
 const builderQuery: MongoDBVariableQuery = {
@@ -69,6 +77,16 @@ describe('VariableQueryEditor', () => {
     render(<VariableQueryEditor {...defaultProps} />);
     await user.click(screen.getByText('Raw pipeline'));
     expect(defaultProps.onChange).toHaveBeenCalledWith(expect.objectContaining({ mode: 'raw' }));
+  });
+
+  it('offers inferred field suggestions via a datalist in builder mode', () => {
+    render(<VariableQueryEditor {...defaultProps} />);
+    const field = screen.getByPlaceholderText('sensor');
+    const listId = field.getAttribute('list');
+    expect(listId).toBeTruthy();
+    const datalist = screen.getByTestId('mongodb-field-suggestions');
+    expect(datalist.id).toBe(listId);
+    expect(datalist.querySelector('option[value="sensor"]')).toBeInTheDocument();
   });
 
   it('commits the field value to onChange on blur (debounced input)', async () => {

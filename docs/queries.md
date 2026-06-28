@@ -13,6 +13,33 @@ The query editor has the following fields:
 - **Time Field** — (Time series only) Which document field contains timestamps
 - **Legend** — (Time series only) Legend format template, e.g. `{{sensor}}`
 
+## Field-Name Autocomplete
+
+Once you select a database and collection, the pipeline editor suggests field
+names as you type. Press `Ctrl+Space` (or just start typing a field reference) to
+open the suggestion list. Indexed fields are ranked first, and each suggestion
+shows its inferred BSON type(s) — with an `· indexed` marker for indexed fields.
+
+The same suggestions back the **Field** input when building a [Query
+variable](#creating-variables-query-type).
+
+**How fields are inferred.** MongoDB is schemaless, so the plugin infers the
+field list per collection:
+
+- If the collection has a [`$jsonSchema`
+  validator](https://www.mongodb.com/docs/manual/core/schema-validation/), its
+  declared fields and types are used directly (no sampling).
+- Otherwise the backend runs a bounded
+  [`$sample`](https://www.mongodb.com/docs/manual/reference/operator/aggregation/sample/)
+  over the collection and walks the returned documents, collecting the union of
+  field paths (including nested, dotted paths like `meta.region` and fields inside
+  arrays of objects) and their observed types.
+
+Because sampling is partial, suggestions are **hints only** — they never validate
+or block a query. A field that isn't suggested (e.g. it only appears in rarely
+sampled documents) can still be used normally. Sample size and the number of
+returned fields are bounded so inference stays cheap on large collections.
+
 ## Aggregation Pipeline Basics
 
 Queries are written as MongoDB [aggregation pipelines](https://www.mongodb.com/docs/manual/core/aggregation-pipeline/) — a JSON array of stage objects. Each stage transforms the data flowing through the pipeline.
@@ -176,7 +203,8 @@ The datasource supports native **Query**-type dashboard variables. In **Dashboar
 settings → Variables → New variable → Query**, select this datasource and choose a mode:
 
 - **Builder** — pick a database, collection, and a field. The variable is populated with the
-  distinct values of that field (sorted). No pipeline required.
+  distinct values of that field (sorted). No pipeline required. The **Field** input
+  autocompletes from the collection's [inferred fields](#field-name-autocomplete).
 - **Raw pipeline** — write an aggregation pipeline for full control. Return either a single
   column, or `__text`/`__value` columns to use different labels and values (see
   [Distinct Values](#distinct-values)).

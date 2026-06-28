@@ -57,6 +57,10 @@
         "path": "img/dashboard-2.png"
       },
       {
+        "name": "Query Editor — Field-Name Autocomplete",
+        "path": "img/field-name-auto-complete.png"
+      },
+      {
         "name": "Configuration",
         "path": "img/add-connection.png"
       }

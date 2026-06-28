@@ -5,6 +5,11 @@
 ### Added
 
 - Native dashboard **Query**-type variables backed by MongoDB. Create a variable with a guided builder (pick a database, collection, and field to list that field's distinct values) or a raw aggregation pipeline (returning a single column, or `__text`/`__value` columns for separate label and value). Variable queries run through the normal query path, so time-range macros (`$__timeFilter`, `$__from`/`$__to`) and other dashboard variables are interpolated inside them, and they pair with the `$__match` stage for index-friendly filtering.
+- **Field-name autocomplete** in the query editors, backed by schema inference. After selecting a collection, the pipeline editor suggests field paths (indexed fields ranked first, inferred BSON type shown as detail) and the variable builder's **Field** input offers the same suggestions. Fields are derived from a `$jsonSchema` validator when one is present, otherwise inferred from a bounded `$sample` of documents — including nested dotted paths (`meta.region`) and fields inside arrays of objects. Suggestions are hints only and never block a query. Adds a `/fields` datasource resource endpoint.
+
+### Changed
+
+- TLS connections now enforce a minimum protocol version of TLS 1.2, rejecting downgrades to older, weaker versions.
 
 ## v0.2.0 (2026-06-27)
 

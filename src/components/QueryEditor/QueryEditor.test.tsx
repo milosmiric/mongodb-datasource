@@ -29,6 +29,10 @@ jest.mock('../../hooks/useCollections', () => ({
   }),
 }));
 
+jest.mock('../../hooks/useFields', () => ({
+  useFields: () => ({ fields: [], loading: false, error: null }),
+}));
+
 const mockDatasource = {
   uid: 'test-uid',
 } as DataSource;
